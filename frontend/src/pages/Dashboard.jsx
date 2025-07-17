@@ -316,7 +316,7 @@ export default function Dashboard() {
             <div className="bg-white rounded-lg shadow p-6">
               <h2 className="text-lg font-semibold mb-4">Members by District & Age Distribution</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
           <h3 className="text-sm font-semibold mb-1 text-center">Members by District</h3>
           <div className="flex justify-center mb-2">
           <div style={{ maxWidth: 180, width: '100%' }}>
@@ -338,41 +338,44 @@ export default function Dashboard() {
           </div>
         {/* Custom 2x2 grid legend for Members by District, aligned left */}
         <div className="mt-2 flex justify-start">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1 w-full">
-            <div className="flex items-center gap-1">
+          <div className="w-full min-w-full overflow-x-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1 w-full min-w-full">
+              <div className="flex items-center gap-1 flex-nowrap whitespace-nowrap">
               <span className="inline-block w-6 h-2.5 rounded" style={{ background: '#3b82f6' }}></span>
               <span className="text-xs">Suphan Buri</span>
               <span className="text-xs font-bold">{districtCounts[0]?.count || 0}</span>
             </div>
-            <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 flex-nowrap whitespace-nowrap">
               <span className="inline-block w-6 h-2.5 rounded" style={{ background: '#f59e42' }}></span>
               <span className="text-xs">Kanchanaburi</span>
               <span className="text-xs font-bold">{districtCounts[1]?.count || 0}</span>
             </div>
-            <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 flex-nowrap whitespace-nowrap">
               <span className="inline-block w-6 h-2.5 rounded" style={{ background: '#6366f1' }}></span>
               <span className="text-xs">Uthai Thani</span>
               <span className="text-xs font-bold">{districtCounts[2]?.count || 0}</span>
             </div>
-            <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 flex-nowrap whitespace-nowrap">
               <span className="inline-block w-6 h-2.5 rounded" style={{ background: '#10b981' }}></span>
               <span className="text-xs">Sing Buri</span>
               <span className="text-xs font-bold">{districtCounts[3]?.count || 0}</span>
+            </div>
             </div>
           </div>
         </div>
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-sm font-semibold mb-1 text-center">Age Distribution</h3>
-                  <div className="flex justify-center">
-                    <div style={{ maxWidth: 180, width: '100%' }}>
-                      <Bar data={ageDistributionChartData} options={{
-                        responsive: true,
-                        plugins: { legend: { display: false } },
-                        scales: { x: { title: { display: true, text: 'Age Group' } }, y: { title: { display: true, text: 'Members' }, beginAtZero: true } }
-                      }} />
-                    </div>
-                  </div>
+          <h3 className="text-sm font-semibold mb-1 text-center">Age Distribution</h3>
+          <div className="flex justify-center items-center mb-2 h-[220px]">
+            <div className="flex-1 h-full">
+              <Bar data={ageDistributionChartData} options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { x: { title: { display: true, text: 'Age Group' } }, y: { title: { display: true, text: 'Members' }, beginAtZero: true } }
+              }} height={220} />
+            </div>
+          </div>
                 </div>
               </div>
             </div>
