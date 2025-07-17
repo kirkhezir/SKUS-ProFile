@@ -366,8 +366,8 @@ export default function Dashboard() {
                 </div>
                 <div className="flex-1">
           <h3 className="text-sm font-semibold mb-1 text-center">Age Distribution</h3>
-          <div className="flex justify-center items-center mb-2 h-[220px]">
-            <div className="flex-1 h-full">
+          <div className="flex justify-center items-center mb-2 h-auto md:h-[220px] max-w-full w-full overflow-x-auto">
+            <div className="flex-1 h-auto md:h-full max-w-full w-full">
               <Bar data={ageDistributionChartData} options={{
                 responsive: true,
                 maintainAspectRatio: false,
