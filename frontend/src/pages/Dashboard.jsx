@@ -205,6 +205,64 @@ export default function Dashboard() {
     .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
     .slice(0, 5);
 
+  // Upcoming birthdays (next 30 days)
+  const upcomingBirthdays = members.filter(m => {
+    if (!m.birthday) return false;
+    const today = new Date();
+    const bday = new Date(m.birthday);
+    bday.setFullYear(today.getFullYear());
+    const diff = (bday - today) / (1000 * 60 * 60 * 24);
+    return diff >= 0 && diff <= 30;
+  });
+
+  // New members this month
+  const currentMonth = new Date().getMonth();
+  const currentYear = new Date().getFullYear();
+  const newMembersThisMonth = members.filter(m => {
+    const d = new Date(m.created_at);
+    return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+  });
+
+  // Retention rate (placeholder: percent of members with contributions > 0)
+  const retentionRate = members.length > 0 ? Math.round((members.filter(m => m.contributions > 0).length / members.length) * 100) : 0;
+
+  // Most active districts (by total contributions)
+  const districtActivity = DISTRICTS.map(district => ({
+    name: district,
+    total: members.filter(m => m.district === district).reduce((sum, m) => sum + (m.contributions || 0), 0)
+  }));
+  const mostActiveDistricts = [...districtActivity].sort((a, b) => b.total - a.total).slice(0, 3);
+
+  // Notifications (sample)
+  const notifications = [
+    { id: 1, message: 'Member profile updated', date: '2025-07-16' },
+    { id: 2, message: 'New member joined', date: '2025-07-15' },
+    { id: 3, message: 'District event scheduled', date: '2025-07-14' },
+  ];
+
+  // Admin notes (sample)
+  const adminNotes = [
+    { id: 1, note: 'Welcome new members!', date: '2025-07-01' },
+    { id: 2, note: 'Please update your profiles.', date: '2025-07-10' },
+  ];
+
+  // Member map (placeholder: show district counts)
+  // In real app, use a map library and member coordinates
+
+  // Recent logins (sample)
+  const recentLogins = [
+    { id: 1, name: 'Somchai Sukjai', date: '2025-07-17 09:00' },
+    { id: 2, name: 'Suda Yimdee', date: '2025-07-16 18:30' },
+    { id: 3, name: 'Nok Srisuk', date: '2025-07-16 15:20' },
+  ];
+
+  // Custom member tags/groups (sample)
+  const memberTags = [
+    { id: 1, tag: 'Committee' },
+    { id: 2, tag: 'Volunteer' },
+    { id: 3, tag: 'Alumni' },
+  ];
+
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-6">SKUS ProFile Dashboard</h1>
@@ -213,42 +271,7 @@ export default function Dashboard() {
       ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold mb-4">Gender Ratio</h2>
-              <div className="mb-4 flex justify-center">
-                <div style={{ maxWidth: 250, width: '100%' }}>
-                  <Doughnut data={genderRatioChartData} />
-                </div>
-              </div>
-            </div>
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold mb-4">Member Age Distribution</h2>
-              <div className="mb-4 flex justify-center">
-                <div style={{ maxWidth: 300, width: '100%' }}>
-                  <Bar data={ageDistributionChartData} options={{
-                    responsive: true,
-                    plugins: { legend: { display: false } },
-                    scales: { x: { title: { display: true, text: 'Age Group' } }, y: { title: { display: true, text: 'Members' }, beginAtZero: true } }
-                  }} />
-                </div>
-              </div>
-            </div>
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold mb-4">Members by District</h2>
-              <div className="mb-4 flex justify-center">
-                <div style={{ maxWidth: 300, width: '100%' }}>
-                  <Pie data={membersByDistrictChartData} />
-                </div>
-              </div>
-              <ul>
-                {districtCounts.map(d => (
-                  <li key={d.name} className="flex justify-between py-2 border-b last:border-b-0">
-                    <span>{d.name}</span>
-                    <span className="font-bold">{d.count || 0}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            {/* Quick Stats + Gender Ratio */}
             <div className="bg-white rounded-lg shadow p-6">
               <h2 className="text-lg font-semibold mb-4">Quick Stats</h2>
               <ul>
@@ -265,7 +288,128 @@ export default function Dashboard() {
                   <span className="font-bold">{femaleCount || 0}</span>
                 </li>
               </ul>
+              {/* Gender Ratio Chart */}
+              <div className="mt-6">
+                <h3 className="text-md font-semibold mb-2">Gender Ratio</h3>
+                <div className="flex justify-center">
+                  <div style={{ maxWidth: 150, width: '100%' }}>
+                    <Doughnut data={genderRatioChartData} />
+                  </div>
+                </div>
+              </div>
             </div>
+            {/* New Members & Upcoming Birthdays (merged) */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-lg font-semibold mb-4">New Members & Upcoming Birthdays</h2>
+              <div className="mb-2">
+                <h3 className="text-md font-semibold mb-1">New Members This Month</h3>
+                <ul>
+                  {newMembersThisMonth.length === 0 ? (
+                    <li className="text-gray-400">No new members this month.</li>
+                  ) : (
+                    newMembersThisMonth.map(m => (
+                      <li key={m.id} className="flex items-center py-2 border-b last:border-b-0">
+                        <span>{m.first_name} {m.last_name}</span>
+                        <span className="ml-auto text-xs text-gray-500">{new Date(m.created_at).toLocaleDateString()}</span>
+                      </li>
+                    ))
+                  )}
+                </ul>
+              </div>
+              <div>
+                <h3 className="text-md font-semibold mb-1">Upcoming Birthdays</h3>
+                <ul>
+                  {upcomingBirthdays.length === 0 ? (
+                    <li className="text-gray-400">No upcoming birthdays.</li>
+                  ) : (
+                    upcomingBirthdays.map(m => (
+                      <li key={m.id} className="flex items-center py-2 border-b last:border-b-0">
+                        <span>{m.first_name} {m.last_name}</span>
+                        <span className="ml-auto text-xs text-gray-500">{new Date(m.birthday).toLocaleDateString()}</span>
+                      </li>
+                    ))
+                  )}
+                </ul>
+              </div>
+            </div>
+            {/* Engagement Overview (Retention Rate + Most Active Districts merged) */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-lg font-semibold mb-4">Engagement Overview</h2>
+              <div className="mb-4">
+                <div className="text-3xl font-bold text-blue-600 mb-2">{retentionRate}%</div>
+                <div className="text-gray-500 mb-2">Member Retention Rate (Members with contributions &gt; 0)</div>
+              </div>
+              <div>
+                <h3 className="text-md font-semibold mb-2">Most Active Districts</h3>
+                <ul>
+                  {mostActiveDistricts.map(d => (
+                    <li key={d.name} className="flex justify-between py-2 border-b last:border-b-0">
+                      <span>{d.name}</span>
+                      <span className="font-bold">{d.total}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+            {/* Member Age Distribution */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-lg font-semibold mb-4">Member Age Distribution</h2>
+              <div className="mb-4 flex justify-center">
+                <div style={{ maxWidth: 300, width: '100%' }}>
+                  <Bar data={ageDistributionChartData} options={{
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { x: { title: { display: true, text: 'Age Group' } }, y: { title: { display: true, text: 'Members' }, beginAtZero: true } }
+                  }} />
+                </div>
+              </div>
+            </div>
+            {/* ...existing code... */}
+            {/* Members by District & Map (merged) */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-lg font-semibold mb-4">Members by District & Map</h2>
+              <div className="mb-4 flex justify-center">
+                <div style={{ maxWidth: 300, width: '100%' }}>
+                  <Pie data={membersByDistrictChartData} />
+                </div>
+              </div>
+              <ul>
+                {districtCounts.map(d => (
+                  <li key={d.name} className="flex justify-between py-2 border-b last:border-b-0">
+                    <span>{d.name}</span>
+                    <span className="font-bold">{d.count || 0}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="text-xs text-gray-500 mt-2">(Map visualization coming soon)</div>
+            </div>
+            {/* Updates & Announcements (Notifications + Admin Notes merged) */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-lg font-semibold mb-4">Updates & Announcements</h2>
+              <div className="mb-2">
+                <h3 className="text-md font-semibold mb-1">Notifications</h3>
+                <ul>
+                  {notifications.map(n => (
+                    <li key={n.id} className="flex justify-between py-2 border-b last:border-b-0">
+                      <span>{n.message}</span>
+                      <span className="text-xs text-gray-500">{n.date}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <h3 className="text-md font-semibold mb-1">Admin Notes & Announcements</h3>
+                <ul>
+                  {adminNotes.map(n => (
+                    <li key={n.id} className="flex justify-between py-2 border-b last:border-b-0">
+                      <span>{n.note}</span>
+                      <span className="text-xs text-gray-500">{n.date}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+            {/* ...existing code... */}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             <div className="bg-white rounded-lg shadow p-6">
@@ -318,24 +462,40 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            {/* Recent Activity & Logins (merged) */}
             <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold mb-4">Recent Activity</h2>
-              <ul>
-                {recentActivity.length === 0 ? (
-                  <li className="text-gray-400">No recent activity yet.</li>
-                ) : (
-                  recentActivity.map(m => (
-                    <li key={m.id} className="flex items-center py-2 border-b last:border-b-0">
-                      <img src={m.image_url || '/default-avatar.png'} alt="avatar" className="w-8 h-8 rounded-full mr-3" />
-                      <span>{m.first_name} {m.last_name}</span>
-                      <span className="ml-auto text-xs text-gray-500">{new Date(m.created_at).toLocaleDateString()}</span>
+              <h2 className="text-lg font-semibold mb-4">Recent Activity & Logins</h2>
+              <div className="mb-2">
+                <h3 className="text-md font-semibold mb-1">Recent Activity</h3>
+                <ul>
+                  {recentActivity.length === 0 ? (
+                    <li className="text-gray-400">No recent activity yet.</li>
+                  ) : (
+                    recentActivity.map(m => (
+                      <li key={m.id} className="flex items-center py-2 border-b last:border-b-0">
+                        <img src={m.image_url || '/default-avatar.png'} alt="avatar" className="w-8 h-8 rounded-full mr-3" />
+                        <span>{m.first_name} {m.last_name}</span>
+                        <span className="ml-auto text-xs text-gray-500">{new Date(m.created_at).toLocaleDateString()}</span>
+                      </li>
+                    ))
+                  )}
+                </ul>
+              </div>
+              <div>
+                <h3 className="text-md font-semibold mb-1">Recent Logins</h3>
+                <ul>
+                  {recentLogins.map(l => (
+                    <li key={l.id} className="flex justify-between py-2 border-b last:border-b-0">
+                      <span>{l.name}</span>
+                      <span className="text-xs text-gray-500">{l.date}</span>
                     </li>
-                  ))
-                )}
-              </ul>
+                  ))}
+                </ul>
+              </div>
             </div>
+            {/* Filter Members + Tags (merged) */}
             <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold mb-4">Filter Members</h2>
+              <h2 className="text-lg font-semibold mb-4">Filter Members & Tags</h2>
               <div className="mb-4 flex gap-2">
                 <select value={filterDistrict} onChange={e => setFilterDistrict(e.target.value)} className="border rounded px-2 py-1">
                   <option value="All">All Districts</option>
@@ -346,6 +506,14 @@ export default function Dashboard() {
                   <option value="Male">Male</option>
                   <option value="Female">Female</option>
                 </select>
+              </div>
+              <div className="mb-4">
+                <h3 className="text-md font-semibold mb-1">Member Tags / Groups</h3>
+                <ul className="flex flex-wrap gap-2">
+                  {memberTags.map(t => (
+                    <li key={t.id} className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm">{t.tag}</li>
+                  ))}
+                </ul>
               </div>
               <div className="overflow-x-auto">
                 <table className="min-w-full text-sm">
