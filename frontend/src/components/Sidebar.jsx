@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 
-const Sidebar = () => {
-  const [collapsed, setCollapsed] = useState(false);
+const Sidebar = (props) => {
+  // Accept collapsed and setCollapsed as props, fallback to local state if not provided
+  const [localCollapsed, setLocalCollapsed] = useState(false);
+  const collapsed = props && props.collapsed !== undefined ? props.collapsed : localCollapsed;
+  const setCollapsed = props && props.setCollapsed ? props.setCollapsed : setLocalCollapsed;
 
   return (
     <div
-      className={`h-screen bg-white text-gray-800 transition-all duration-300 ${collapsed ? 'w-16' : 'w-64'} flex flex-col border-r shadow-md`}
+      className={`h-screen bg-white text-gray-800 transition-all duration-300 ${collapsed ? 'w-16' : 'w-64'} flex flex-col border-r shadow-md fixed top-0 left-0 z-30`}
     >
       <button
         className="p-2 focus:outline-none hover:bg-gray-100 rounded"
@@ -51,6 +54,6 @@ const Sidebar = () => {
       </nav>
     </div>
   );
-};
+}
 
 export default Sidebar;

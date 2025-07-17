@@ -86,7 +86,8 @@ const sampleMembers = [
   },
 ];
 
-export default function Dashboard() {
+export default function Dashboard(props) {
+  const collapsed = props && props.collapsed;
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterDistrict, setFilterDistrict] = useState('All');
@@ -268,7 +269,7 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="p-6">
+    <div className={`p-6 transition-all duration-300 ${collapsed ? 'md:ml-16' : 'md:ml-64'}`}>
       <h1 className="text-2xl font-bold mb-6">SKUS ProFile Dashboard</h1>
       {loading ? (
         <div>Loading...</div>
