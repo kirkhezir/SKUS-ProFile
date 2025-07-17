@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { api } from '../services/api';
 import { Bar, Pie, Doughnut } from 'react-chartjs-2';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -12,7 +13,7 @@ import {
   ArcElement
 } from 'chart.js';
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement, ChartDataLabels);
 
 const DISTRICTS = [
   'Suphan Buri',
@@ -124,7 +125,7 @@ export default function Dashboard() {
       {
         label: 'Gender Ratio',
         data: [maleCount, femaleCount],
-        backgroundColor: ['#3b82f6', '#f59e42'],
+        backgroundColor: ['#3b82f6', '#f59e42'], // Blue for Male, Orange for Female
       },
     ],
   };
@@ -188,7 +189,10 @@ export default function Dashboard() {
         label: 'Members',
         data: districtCounts.map(d => d.count),
         backgroundColor: [
-          '#3b82f6', '#6366f1', '#10b981', '#f59e42'
+          '#3b82f6', // Suphan Buri (Blue)
+          '#f59e42', // Kanchanaburi (Orange)
+          '#6366f1', // Uthai Thani (Indigo)
+          '#10b981'  // Sing Buri (Green)
         ],
       },
     ],
@@ -271,29 +275,103 @@ export default function Dashboard() {
       ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            {/* Quick Stats + Gender Ratio */}
+            {/* Quick Stats & Gender Ratio */}
             <div className="bg-white rounded-lg shadow p-6">
               <h2 className="text-lg font-semibold mb-4">Quick Stats</h2>
-              <ul>
-                <li className="flex justify-between py-2 border-b last:border-b-0">
-                  <span>Total Members</span>
-                  <span className="font-bold">{totalMembers || 0}</span>
-                </li>
-                <li className="flex justify-between py-2 border-b last:border-b-0">
-                  <span>Male</span>
-                  <span className="font-bold">{maleCount || 0}</span>
-                </li>
-                <li className="flex justify-between py-2 border-b last:border-b-0">
-                  <span>Female</span>
-                  <span className="font-bold">{femaleCount || 0}</span>
-                </li>
-              </ul>
-              {/* Gender Ratio Chart */}
-              <div className="mt-6">
-                <h3 className="text-md font-semibold mb-2">Gender Ratio</h3>
-                <div className="flex justify-center">
-                  <div style={{ maxWidth: 150, width: '100%' }}>
-                    <Doughnut data={genderRatioChartData} />
+              <div className="flex flex-col md:flex-row gap-6 items-start">
+                <ul className="flex-1">
+                  <li className="flex justify-between py-2 border-b last:border-b-0">
+                    <span>Total Members</span>
+                    <span className="font-bold">{totalMembers || 0}</span>
+                  </li>
+                  <li className="flex justify-between py-2 border-b last:border-b-0">
+                    <span>Male</span>
+                    <span className="font-bold">{maleCount || 0}</span>
+                  </li>
+                  <li className="flex justify-between py-2 border-b last:border-b-0">
+                    <span>Female</span>
+                    <span className="font-bold">{femaleCount || 0}</span>
+                  </li>
+                </ul>
+                <div className="flex-1 flex flex-col items-center">
+                  <h3 className="text-sm font-semibold mb-1">Gender Ratio</h3>
+                  <div style={{ maxWidth: 140, width: '100%' }}>
+                    <Doughnut data={genderRatioChartData} options={{ plugins: { legend: { display: false } } }} />
+                  </div>
+                  {/* Custom horizontal legend for Gender Ratio */}
+                  <div className="flex justify-center gap-4 mt-2">
+                    <div className="flex items-center gap-1">
+                      <span className="inline-block w-4 h-3 rounded" style={{ background: '#3b82f6' }}></span>
+                      <span className="text-xs">Male</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className="inline-block w-4 h-3 rounded" style={{ background: '#f59e42' }}></span>
+                      <span className="text-xs">Female</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {/* Members by District & Age Distribution */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-lg font-semibold mb-4">Members by District & Age Distribution</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                <div className="flex-1">
+          <h3 className="text-sm font-semibold mb-1 text-center">Members by District</h3>
+          <div className="flex justify-center mb-2">
+          <div style={{ maxWidth: 180, width: '100%' }}>
+            <Pie
+              data={membersByDistrictChartData}
+              options={{
+                plugins: {
+                  legend: { display: false },
+                  datalabels: {
+                    color: '#222',
+                    font: { weight: 'bold' },
+                    formatter: (value) => value,
+                  },
+                },
+              }}
+              plugins={[ChartDataLabels]}
+            />
+          </div>
+          </div>
+        {/* Custom 2x2 grid legend for Members by District, aligned left */}
+        <div className="mt-2 flex justify-start">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1 w-full">
+            <div className="flex items-center gap-1">
+              <span className="inline-block w-6 h-2.5 rounded" style={{ background: '#3b82f6' }}></span>
+              <span className="text-xs">Suphan Buri</span>
+              <span className="text-xs font-bold">{districtCounts[0]?.count || 0}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="inline-block w-6 h-2.5 rounded" style={{ background: '#f59e42' }}></span>
+              <span className="text-xs">Kanchanaburi</span>
+              <span className="text-xs font-bold">{districtCounts[1]?.count || 0}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="inline-block w-6 h-2.5 rounded" style={{ background: '#6366f1' }}></span>
+              <span className="text-xs">Uthai Thani</span>
+              <span className="text-xs font-bold">{districtCounts[2]?.count || 0}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="inline-block w-6 h-2.5 rounded" style={{ background: '#10b981' }}></span>
+              <span className="text-xs">Sing Buri</span>
+              <span className="text-xs font-bold">{districtCounts[3]?.count || 0}</span>
+            </div>
+          </div>
+        </div>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-sm font-semibold mb-1 text-center">Age Distribution</h3>
+                  <div className="flex justify-center">
+                    <div style={{ maxWidth: 180, width: '100%' }}>
+                      <Bar data={ageDistributionChartData} options={{
+                        responsive: true,
+                        plugins: { legend: { display: false } },
+                        scales: { x: { title: { display: true, text: 'Age Group' } }, y: { title: { display: true, text: 'Members' }, beginAtZero: true } }
+                      }} />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -351,28 +429,10 @@ export default function Dashboard() {
                 </ul>
               </div>
             </div>
-            {/* Member Age Distribution */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold mb-4">Member Age Distribution</h2>
-              <div className="mb-4 flex justify-center">
-                <div style={{ maxWidth: 300, width: '100%' }}>
-                  <Bar data={ageDistributionChartData} options={{
-                    responsive: true,
-                    plugins: { legend: { display: false } },
-                    scales: { x: { title: { display: true, text: 'Age Group' } }, y: { title: { display: true, text: 'Members' }, beginAtZero: true } }
-                  }} />
-                </div>
-              </div>
-            </div>
             {/* ...existing code... */}
-            {/* Members by District & Map (merged) */}
+            {/* Members by District & Map (now only Map) */}
             <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold mb-4">Members by District & Map</h2>
-              <div className="mb-4 flex justify-center">
-                <div style={{ maxWidth: 300, width: '100%' }}>
-                  <Pie data={membersByDistrictChartData} />
-                </div>
-              </div>
+              <h2 className="text-lg font-semibold mb-4">Member Map (by District)</h2>
               <ul>
                 {districtCounts.map(d => (
                   <li key={d.name} className="flex justify-between py-2 border-b last:border-b-0">
