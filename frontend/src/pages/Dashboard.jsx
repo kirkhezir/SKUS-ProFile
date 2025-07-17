@@ -1,12 +1,88 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { api } from '../services/api';
-import { useMemo } from 'react';
+import { Bar, Pie, Doughnut } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement
+} from 'chart.js';
+
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
 
 const DISTRICTS = [
   'Suphan Buri',
   'Kanchanaburi',
   'Uthai Thani',
   'Sing Buri',
+];
+
+// Sample member data
+const sampleMembers = [
+  {
+    id: 1,
+    first_name: 'Somchai',
+    last_name: 'Sukjai',
+    email: 'somchai@example.com',
+    gender: 'Male',
+    district: 'Suphan Buri',
+    image_url: '',
+    created_at: '2025-06-01',
+    contributions: 5,
+    age: 34,
+  },
+  {
+    id: 2,
+    first_name: 'Suda',
+    last_name: 'Yimdee',
+    email: 'suda@example.com',
+    gender: 'Female',
+    district: 'Kanchanaburi',
+    image_url: '',
+    created_at: '2025-06-15',
+    contributions: 8,
+    age: 28,
+  },
+  {
+    id: 3,
+    first_name: 'Anan',
+    last_name: 'Chaiyo',
+    email: 'anan@example.com',
+    gender: 'Male',
+    district: 'Uthai Thani',
+    image_url: '',
+    created_at: '2025-07-01',
+    contributions: 2,
+    age: 41,
+  },
+  {
+    id: 4,
+    first_name: 'Nok',
+    last_name: 'Srisuk',
+    email: 'nok@example.com',
+    gender: 'Female',
+    district: 'Sing Buri',
+    image_url: '',
+    created_at: '2025-07-10',
+    contributions: 10,
+    age: 36,
+  },
+  {
+    id: 5,
+    first_name: 'Prasit',
+    last_name: 'Thongdee',
+    email: 'prasit@example.com',
+    gender: 'Male',
+    district: 'Suphan Buri',
+    image_url: '',
+    created_at: '2025-07-15',
+    contributions: 1,
+    age: 22,
+  },
 ];
 
 export default function Dashboard() {
@@ -17,11 +93,15 @@ export default function Dashboard() {
 
   useEffect(() => {
     api.get('members/').then(res => {
-      setMembers(res.data);
+      if (res.data && res.data.length > 0) {
+        setMembers(res.data);
+      } else {
+        setMembers(sampleMembers);
+      }
       setLoading(false);
     }).catch(() => {
-      // If API fails, show UI with placeholder data
-      setMembers([]);
+      // If API fails, show UI with sample data
+      setMembers(sampleMembers);
       setLoading(false);
     });
   }, []);
@@ -32,10 +112,41 @@ export default function Dashboard() {
     count: members.filter(m => m.district === district).length,
   }));
 
-  // Other dashboard stats
+  // Dashboard stats
   const totalMembers = members.length;
   const maleCount = members.filter(m => m.gender === 'Male').length;
   const femaleCount = members.filter(m => m.gender === 'Female').length;
+
+  // Gender ratio chart data
+  const genderRatioChartData = {
+    labels: ['Male', 'Female'],
+    datasets: [
+      {
+        label: 'Gender Ratio',
+        data: [maleCount, femaleCount],
+        backgroundColor: ['#3b82f6', '#f59e42'],
+      },
+    ],
+  };
+
+  // Member age distribution chart data
+  const ageGroups = ['18-25', '26-35', '36-45', '46+'];
+  const ageGroupCounts = [
+    members.filter(m => m.age >= 18 && m.age <= 25).length,
+    members.filter(m => m.age >= 26 && m.age <= 35).length,
+    members.filter(m => m.age >= 36 && m.age <= 45).length,
+    members.filter(m => m.age >= 46).length,
+  ];
+  const ageDistributionChartData = {
+    labels: ageGroups,
+    datasets: [
+      {
+        label: 'Age Distribution',
+        data: ageGroupCounts,
+        backgroundColor: ['#3b82f6', '#6366f1', '#10b981', '#f59e42'],
+      },
+    ],
+  };
 
   // Filtered members for table and stats
   const filteredMembers = useMemo(() => {
@@ -57,6 +168,32 @@ export default function Dashboard() {
     return Object.entries(byMonth).sort((a, b) => new Date(a[0]) - new Date(b[0]));
   }, [members]);
 
+  // Chart data for member growth
+  const memberGrowthChartData = {
+    labels: growthData.map(([month]) => month),
+    datasets: [
+      {
+        label: 'New Members',
+        data: growthData.map(([_, count]) => count),
+        backgroundColor: '#3b82f6',
+      },
+    ],
+  };
+
+  // Chart data for members by district
+  const membersByDistrictChartData = {
+    labels: districtCounts.map(d => d.name),
+    datasets: [
+      {
+        label: 'Members',
+        data: districtCounts.map(d => d.count),
+        backgroundColor: [
+          '#3b82f6', '#6366f1', '#10b981', '#f59e42'
+        ],
+      },
+    ],
+  };
+
   // Top contributors (members with most activity, e.g., 'contributions' field)
   const topContributors = [...members]
     .filter(m => m.contributions)
@@ -77,7 +214,32 @@ export default function Dashboard() {
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-lg font-semibold mb-4">Gender Ratio</h2>
+              <div className="mb-4 flex justify-center">
+                <div style={{ maxWidth: 250, width: '100%' }}>
+                  <Doughnut data={genderRatioChartData} />
+                </div>
+              </div>
+            </div>
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-lg font-semibold mb-4">Member Age Distribution</h2>
+              <div className="mb-4 flex justify-center">
+                <div style={{ maxWidth: 300, width: '100%' }}>
+                  <Bar data={ageDistributionChartData} options={{
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { x: { title: { display: true, text: 'Age Group' } }, y: { title: { display: true, text: 'Members' }, beginAtZero: true } }
+                  }} />
+                </div>
+              </div>
+            </div>
+            <div className="bg-white rounded-lg shadow p-6">
               <h2 className="text-lg font-semibold mb-4">Members by District</h2>
+              <div className="mb-4 flex justify-center">
+                <div style={{ maxWidth: 300, width: '100%' }}>
+                  <Pie data={membersByDistrictChartData} />
+                </div>
+              </div>
               <ul>
                 {districtCounts.map(d => (
                   <li key={d.name} className="flex justify-between py-2 border-b last:border-b-0">
@@ -108,6 +270,13 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             <div className="bg-white rounded-lg shadow p-6">
               <h2 className="text-lg font-semibold mb-4">Member Growth Over Time</h2>
+              <div className="mb-4">
+                <Bar data={memberGrowthChartData} options={{
+                  responsive: true,
+                  plugins: { legend: { display: false } },
+                  scales: { x: { title: { display: true, text: 'Month' } }, y: { title: { display: true, text: 'New Members' }, beginAtZero: true } }
+                }} />
+              </div>
               <div className="overflow-x-auto">
                 <table className="min-w-full text-sm">
                   <thead>
@@ -226,6 +395,26 @@ export default function Dashboard() {
             >
               Export CSV
             </button>
+          </div>
+          <div className="bg-white rounded-lg shadow p-6 mt-8">
+            <h2 className="text-lg font-semibold mb-4">More Dashboard Suggestions</h2>
+            <ul className="list-disc ml-6">
+              <li>Show member age distribution (add a chart)</li>
+              <li>Display upcoming birthdays or anniversaries</li>
+              <li>Highlight new members this month</li>
+              <li>Show member retention rate</li>
+              <li>Display most active districts</li>
+              <li>Show average contributions per member</li>
+              <li>Integrate notifications for important updates</li>
+              <li>Allow admins to add notes or announcements</li>
+              <li>Show a leaderboard for member engagement</li>
+              <li>Display a map of member locations</li>
+              <li>Show recent logins or activity timestamps</li>
+              <li>Enable custom member tags or groups</li>
+              <li>Show gender ratio as a chart</li>
+              <li>Display member contact statistics</li>
+              <li>Integrate with external data sources (e.g., Google Sheets)</li>
+            </ul>
           </div>
         </>
       )}
