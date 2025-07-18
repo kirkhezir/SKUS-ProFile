@@ -15,7 +15,7 @@ import {
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement, ChartDataLabels);
 
-const DISTRICTS = [
+export const DISTRICTS = [
   'Suphan Buri',
   'Kanchanaburi',
   'Uthai Thani',
@@ -23,7 +23,7 @@ const DISTRICTS = [
 ];
 
 // Sample member data
-const sampleMembers = [
+export const sampleMembers = [
   {
     id: 1,
     first_name: 'Somchai',

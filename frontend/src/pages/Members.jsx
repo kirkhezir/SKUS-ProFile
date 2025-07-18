@@ -1,29 +1,250 @@
-import { useEffect, useState } from 'react';
-import { api } from '../services/api';
+
+import React, { useState, useMemo } from 'react';
+import { DISTRICTS, sampleMembers } from './Dashboard';
+
+const TAGS = ['Committee', 'Volunteer', 'Alumni'];
+
+function exportCSV(members) {
+  const csv = [
+    ['Name', 'District', 'Gender', 'Email', 'Tags'],
+    ...members.map(m => [
+      m.first_name + ' ' + m.last_name,
+      m.district,
+      m.gender,
+      m.email,
+      (m.tags || []).join('; ')
+    ])
+  ].map(row => row.join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'members.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 export default function Members() {
-  const [members, setMembers] = useState([]);
+  const [members, setMembers] = useState(sampleMembers.map(m => ({ ...m, tags: [] })));
+  const [search, setSearch] = useState('');
+  const [filterDistrict, setFilterDistrict] = useState('All');
+  const [filterGender, setFilterGender] = useState('All');
+  const [filterTag, setFilterTag] = useState('All');
+  const [selected, setSelected] = useState([]);
+  const [showProfile, setShowProfile] = useState(null);
+  const [showAdd, setShowAdd] = useState(false);
+  const [newMember, setNewMember] = useState({ first_name: '', last_name: '', email: '', gender: 'Male', district: DISTRICTS[0], tags: [] });
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
 
-  useEffect(() => {
-    api.get('members/').then(res => setMembers(res.data));
-  }, []);
+  // Filtered and searched members
+  const filteredMembers = useMemo(() => {
+    return members.filter(m =>
+      (filterDistrict === 'All' || m.district === filterDistrict) &&
+      (filterGender === 'All' || m.gender === filterGender) &&
+      (filterTag === 'All' || (m.tags || []).includes(filterTag)) &&
+      (`${m.first_name} ${m.last_name}`.toLowerCase().includes(search.toLowerCase()) || m.email.toLowerCase().includes(search.toLowerCase()))
+    );
+  }, [members, filterDistrict, filterGender, filterTag, search]);
+
+  // Pagination
+  const totalPages = Math.ceil(filteredMembers.length / pageSize);
+  const pagedMembers = filteredMembers.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  // Bulk select
+  const toggleSelect = id => {
+    setSelected(selected.includes(id) ? selected.filter(s => s !== id) : [...selected, id]);
+  };
+  const selectAll = () => {
+    setSelected(pagedMembers.map(m => m.id));
+  };
+  const clearSelected = () => setSelected([]);
+
+  // Add member
+  const handleAdd = () => {
+    setMembers([...members, { ...newMember, id: members.length + 1 }]);
+    setShowAdd(false);
+    setNewMember({ first_name: '', last_name: '', email: '', gender: 'Male', district: DISTRICTS[0], tags: [] });
+  };
+
+  // Edit member (UI only)
+  const handleEdit = (id, updated) => {
+    setMembers(members.map(m => m.id === id ? { ...m, ...updated } : m));
+    setShowProfile(null);
+  };
+
+  // Delete member
+  const handleDelete = id => {
+    setMembers(members.filter(m => m.id !== id));
+    setShowProfile(null);
+  };
+  const handleBulkDelete = () => {
+    setMembers(members.filter(m => !selected.includes(m.id)));
+    clearSelected();
+  };
+
+  // Tag assignment
+  const assignTag = (id, tag) => {
+    setMembers(members.map(m => m.id === id ? { ...m, tags: [...(m.tags || []), tag] } : m));
+  };
+  const removeTag = (id, tag) => {
+    setMembers(members.map(m => m.id === id ? { ...m, tags: (m.tags || []).filter(t => t !== tag) } : m));
+  };
 
   return (
-    <div className="p-4">
-      <h1 className="text-xl font-bold mb-4">Members</h1>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {members.map(member => (
-          <div key={member.id} className="border rounded-lg p-4 bg-white">
-            <img
-              src={member.image_url || '/default-avatar.png'}
-              alt="avatar"
-              className="w-20 h-20 rounded-full mb-2"
-            />
-            <p className="font-semibold">{member.first_name} {member.last_name}</p>
-            <p className="text-sm">{member.email}</p>
-          </div>
-        ))}
+    <div className="p-6">
+      <h1 className="text-3xl font-bold mb-8 text-gray-900">Members</h1>
+      <div className="mb-6 flex flex-wrap gap-3 items-center bg-white p-4 rounded-lg shadow border border-gray-200">
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name or email" className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+        <select value={filterDistrict} onChange={e => setFilterDistrict(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2">
+          <option value="All">All Districts</option>
+          {DISTRICTS.map(d => <option key={d} value={d}>{d}</option>)}
+        </select>
+        <select value={filterGender} onChange={e => setFilterGender(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2">
+          <option value="All">All Genders</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+        </select>
+        <select value={filterTag} onChange={e => setFilterTag(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2">
+          <option value="All">All Tags</option>
+          {TAGS.map(t => <option key={t} value={t}>{t}</option>)}
+        </select>
+        <button className="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition" onClick={() => setShowAdd(true)}>Add Member</button>
+        <button className="bg-green-500 text-white px-4 py-2 rounded-lg shadow hover:bg-green-600 transition" onClick={() => exportCSV(filteredMembers)}>Export CSV</button>
+        <button className={`bg-red-500 text-white px-4 py-2 rounded-lg shadow hover:bg-red-600 transition ${selected.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`} onClick={handleBulkDelete} disabled={selected.length === 0}>Delete Selected</button>
       </div>
+      <div className="overflow-x-auto rounded-lg shadow border border-gray-200 bg-white">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50 sticky top-0 z-10">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Select</th>
+              <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Avatar</th>
+              <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Name</th>
+              <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">District</th>
+              <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Gender</th>
+              <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Email</th>
+              <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Tags</th>
+              <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-100">
+            {pagedMembers.length === 0 ? (
+              <tr>
+                <td colSpan={8} className="py-6 px-6 text-center text-gray-400">No members found</td>
+              </tr>
+            ) : (
+              pagedMembers.map(m => (
+                <tr key={m.id} className={`hover:bg-blue-50 transition ${selected.includes(m.id) ? 'bg-blue-100' : ''}`}>
+                  <td className="px-6 py-4">
+                    <input type="checkbox" checked={selected.includes(m.id)} onChange={() => toggleSelect(m.id)} className="form-checkbox h-4 w-4 text-blue-600" />
+                  </td>
+                  <td className="px-6 py-4">
+                    <img src={m.image_url || '/default-avatar.png'} alt="avatar" className="w-10 h-10 rounded-full border border-gray-300 shadow-sm" />
+                  </td>
+                  <td className="px-6 py-4 font-semibold text-gray-900">{m.first_name} {m.last_name}</td>
+                  <td className="px-6 py-4">
+                    <span className="inline-block bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-medium">{m.district}</span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${m.gender === 'Male' ? 'bg-blue-200 text-blue-800' : 'bg-orange-100 text-orange-800'}`}>{m.gender}</span>
+                  </td>
+                  <td className="px-6 py-4 text-gray-700">{m.email}</td>
+                  <td className="px-6 py-4">
+                    {(m.tags || []).length > 0 ? (
+                      <div className="flex flex-wrap gap-1">
+                        {m.tags.map(tag => (
+                          <span key={tag} className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-xs">{tag}</span>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-gray-400 text-xs">-</span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4">
+                    {/* View Icon */}
+                    <button title="View" className="p-1 mr-2" style={{ color: '#2563eb', background: '#eff6ff', borderRadius: '6px' }} onClick={() => setShowProfile(m)}>
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                    </button>
+                    {/* Edit Icon */}
+                    <button title="Edit" className="p-1 mr-2" style={{ color: '#059669', background: '#ecfdf5', borderRadius: '6px' }} onClick={() => {/* TODO: implement edit modal */}}>
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 20h9" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16.5 3.5a2.121 2.121 0 113 3L7 19l-4 1 1-4 12.5-12.5z" /></svg>
+                    </button>
+                    {/* Delete Icon (Trash) */}
+                    <button title="Delete" className="p-1" style={{ color: '#dc2626', background: '#fef2f2', borderRadius: '6px' }} onClick={() => handleDelete(m.id)}>
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3m-7 0h10" /></svg>
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+      {/* Pagination */}
+      <div className="flex gap-2 mt-4">
+        <button onClick={() => setCurrentPage(1)} disabled={currentPage === 1}>First</button>
+        <button onClick={() => setCurrentPage(currentPage - 1)} disabled={currentPage === 1}>Prev</button>
+        <span>Page {currentPage} of {totalPages}</span>
+        <button onClick={() => setCurrentPage(currentPage + 1)} disabled={currentPage === totalPages}>Next</button>
+        <button onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages}>Last</button>
+      </div>
+      {/* Member Profile Modal */}
+      {showProfile && (
+        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded shadow-lg w-full max-w-md">
+            <h2 className="text-xl font-bold mb-2">Member Profile</h2>
+            <div className="mb-2">Name: {showProfile.first_name} {showProfile.last_name}</div>
+            <div className="mb-2">Email: {showProfile.email}</div>
+            <div className="mb-2">District: {showProfile.district}</div>
+            <div className="mb-2">Gender: {showProfile.gender}</div>
+            <div className="mb-2">Tags: {(showProfile.tags || []).join(', ')}</div>
+            <div className="mb-2">Contributions: {showProfile.contributions || 0}</div>
+            <div className="mb-2">Joined: {showProfile.created_at}</div>
+            <div className="mb-2">Age: {showProfile.age}</div>
+            <div className="mb-2 flex gap-2">
+              {TAGS.map(tag => (
+                showProfile.tags && showProfile.tags.includes(tag) ? (
+                  <button key={tag} className="bg-red-100 text-red-700 px-2 py-1 rounded" onClick={() => removeTag(showProfile.id, tag)}>Remove {tag}</button>
+                ) : (
+                  <button key={tag} className="bg-blue-100 text-blue-700 px-2 py-1 rounded" onClick={() => assignTag(showProfile.id, tag)}>Add {tag}</button>
+                )
+              ))}
+            </div>
+            <button className="mt-4 bg-gray-300 px-4 py-1 rounded" onClick={() => setShowProfile(null)}>Close</button>
+          </div>
+        </div>
+      )}
+      {/* Add Member Modal */}
+      {showAdd && (
+        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded shadow-lg w-full max-w-md">
+            <h2 className="text-xl font-bold mb-2">Add Member</h2>
+            <input className="border rounded px-2 py-1 mb-2 w-full" placeholder="First Name" value={newMember.first_name} onChange={e => setNewMember({ ...newMember, first_name: e.target.value })} />
+            <input className="border rounded px-2 py-1 mb-2 w-full" placeholder="Last Name" value={newMember.last_name} onChange={e => setNewMember({ ...newMember, last_name: e.target.value })} />
+            <input className="border rounded px-2 py-1 mb-2 w-full" placeholder="Email" value={newMember.email} onChange={e => setNewMember({ ...newMember, email: e.target.value })} />
+            <select className="border rounded px-2 py-1 mb-2 w-full" value={newMember.gender} onChange={e => setNewMember({ ...newMember, gender: e.target.value })}>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+            </select>
+            <select className="border rounded px-2 py-1 mb-2 w-full" value={newMember.district} onChange={e => setNewMember({ ...newMember, district: e.target.value })}>
+              {DISTRICTS.map(d => <option key={d} value={d}>{d}</option>)}
+            </select>
+            <div className="mb-2">
+              <span className="font-semibold">Tags:</span>
+              {TAGS.map(tag => (
+                <label key={tag} className="ml-2">
+                  <input type="checkbox" checked={newMember.tags.includes(tag)} onChange={e => {
+                    if (e.target.checked) setNewMember({ ...newMember, tags: [...newMember.tags, tag] });
+                    else setNewMember({ ...newMember, tags: newMember.tags.filter(t => t !== tag) });
+                  }} /> {tag}
+                </label>
+              ))}
+            </div>
+            <button className="bg-blue-500 text-white px-4 py-2 rounded mr-2" onClick={handleAdd}>Add</button>
+            <button className="bg-gray-300 px-4 py-2 rounded" onClick={() => setShowAdd(false)}>Cancel</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
