@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { DISTRICTS, sampleMembers } from './Dashboard';
+import { CHURCHES, sampleMembers } from './Dashboard';
 
 // Add custom scrollbar styles
 const customScrollbarStyles = `
@@ -30,7 +30,7 @@ const TAGS = ['Committee', 'Volunteer', 'Alumni'];
 
 function exportCSV(members) {
   const csv = [
-    ['Name', 'District', 'Gender', 'Email', 'Tags'],
+    ['Name', 'Church', 'Gender', 'Email', 'Tags'],
     ...members.map(m => [
       m.first_name + ' ' + m.last_name,
       m.district,
@@ -51,26 +51,26 @@ function exportCSV(members) {
 export default function Members() {
   const [members, setMembers] = useState(sampleMembers.map(m => ({ ...m, tags: [] })));
   const [search, setSearch] = useState('');
-  const [filterDistrict, setFilterDistrict] = useState('All');
+  const [filterChurch, setFilterChurch] = useState('All');
   const [filterGender, setFilterGender] = useState('All');
   const [filterTag, setFilterTag] = useState('All');
   const [selected, setSelected] = useState([]);
   const [showProfile, setShowProfile] = useState(null);
   const [showAdd, setShowAdd] = useState(false);
   const [showEdit, setShowEdit] = useState(null);
-  const [newMember, setNewMember] = useState({ first_name: '', last_name: '', email: '', gender: 'Male', district: DISTRICTS[0], tags: [] });
+  const [newMember, setNewMember] = useState({ first_name: '', last_name: '', email: '', gender: 'Male', church: CHURCHES[0], tags: [] });
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
 
   // Filtered and searched members
   const filteredMembers = useMemo(() => {
     return members.filter(m =>
-      (filterDistrict === 'All' || m.district === filterDistrict) &&
+      (filterChurch === 'All' || m.church === filterChurch) &&
       (filterGender === 'All' || m.gender === filterGender) &&
       (filterTag === 'All' || (m.tags || []).includes(filterTag)) &&
       (`${m.first_name} ${m.last_name}`.toLowerCase().includes(search.toLowerCase()) || m.email.toLowerCase().includes(search.toLowerCase()))
     );
-  }, [members, filterDistrict, filterGender, filterTag, search]);
+  }, [members, filterChurch, filterGender, filterTag, search]);
 
   // Pagination
   const totalPages = Math.ceil(filteredMembers.length / pageSize);
@@ -89,7 +89,7 @@ export default function Members() {
   const handleAdd = () => {
     setMembers([...members, { ...newMember, id: members.length + 1 }]);
     setShowAdd(false);
-    setNewMember({ first_name: '', last_name: '', email: '', gender: 'Male', district: DISTRICTS[0], tags: [] });
+    setNewMember({ first_name: '', last_name: '', email: '', gender: 'Male', church: CHURCHES[0], tags: [] });
   };
 
   // Edit member (UI only)
@@ -121,9 +121,9 @@ export default function Members() {
       <h1 className="text-3xl font-bold mb-8 text-gray-900">Members</h1>
       <div className="mb-6 flex flex-wrap gap-3 items-center bg-white p-4 rounded-lg shadow border border-gray-200">
         <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name or email" className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400" />
-        <select value={filterDistrict} onChange={e => setFilterDistrict(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2">
-          <option value="All">All Districts</option>
-          {DISTRICTS.map(d => <option key={d} value={d}>{d}</option>)}
+        <select value={filterChurch} onChange={e => setFilterChurch(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2">
+          <option value="All">All Churches</option>
+          {CHURCHES.map(d => <option key={d} value={d}>{d}</option>)}
         </select>
         <select value={filterGender} onChange={e => setFilterGender(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2">
           <option value="All">All Genders</option>
@@ -145,7 +145,7 @@ export default function Members() {
               <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Select</th>
               <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Avatar</th>
               <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Name</th>
-              <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">District</th>
+              <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Church</th>
               <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Gender</th>
               <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Email</th>
               <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Tags</th>
@@ -168,7 +168,7 @@ export default function Members() {
                   </td>
                   <td className="px-6 py-4 font-semibold text-gray-900">{m.first_name} {m.last_name}</td>
                   <td className="px-6 py-4">
-                    <span className="inline-block bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-medium">{m.district}</span>
+                    <span className="inline-block bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-medium">{m.church}</span>
                   </td>
                   <td className="px-6 py-4">
                     <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${m.gender === 'Male' ? 'bg-blue-200 text-blue-800' : 'bg-orange-100 text-orange-800'}`}>{m.gender}</span>
@@ -220,7 +220,7 @@ export default function Members() {
             <h2 className="text-xl font-bold mb-2">Member Profile</h2>
             <div className="mb-2">Name: {showProfile.first_name} {showProfile.last_name}</div>
             <div className="mb-2">Email: {showProfile.email}</div>
-            <div className="mb-2">District: {showProfile.district}</div>
+            <div className="mb-2">Church: {showProfile.church}</div>
             <div className="mb-2">Gender: {showProfile.gender}</div>
             <div className="mb-2">Tags: {(showProfile.tags || []).join(', ')}</div>
             <div className="mb-2">Contributions: {showProfile.contributions || 0}</div>
@@ -291,13 +291,13 @@ export default function Members() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">District</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Church</label>
                 <select 
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" 
-                  value={showEdit.district} 
-                  onChange={e => setShowEdit({ ...showEdit, district: e.target.value })}
+                  value={showEdit.church} 
+                  onChange={e => setShowEdit({ ...showEdit, church: e.target.value })}
                 >
-                  {DISTRICTS.map(d => <option key={d} value={d}>{d}</option>)}
+                  {CHURCHES.map(d => <option key={d} value={d}>{d}</option>)}
                 </select>
               </div>
               <div>
@@ -392,13 +392,13 @@ export default function Members() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">District</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Church</label>
                 <select 
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" 
-                  value={newMember.district} 
-                  onChange={e => setNewMember({ ...newMember, district: e.target.value })}
+                  value={newMember.church} 
+                  onChange={e => setNewMember({ ...newMember, church: e.target.value })}
                 >
-                  {DISTRICTS.map(d => <option key={d} value={d}>{d}</option>)}
+                  {CHURCHES.map(d => <option key={d} value={d}>{d}</option>)}
                 </select>
               </div>
               <div>

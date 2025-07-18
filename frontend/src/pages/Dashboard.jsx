@@ -10,12 +10,25 @@ import {
   Title,
   Tooltip,
   Legend,
-  ArcElement
+  ArcElement,
+  PointElement,
+  LineElement
 } from 'chart.js';
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement, ChartDataLabels);
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement,
+  PointElement,
+  LineElement,
+  ChartDataLabels
+);
 
-export const DISTRICTS = [
+export const CHURCHES = [
   'Suphan Buri',
   'Kanchanaburi',
   'Uthai Thani',
@@ -30,7 +43,7 @@ export const sampleMembers = [
     last_name: 'Sukjai',
     email: 'somchai@example.com',
     gender: 'Male',
-    district: 'Suphan Buri',
+    church: 'Suphan Buri',
     image_url: '',
     created_at: '2025-06-01',
     contributions: 5,
@@ -42,7 +55,7 @@ export const sampleMembers = [
     last_name: 'Yimdee',
     email: 'suda@example.com',
     gender: 'Female',
-    district: 'Kanchanaburi',
+    church: 'Kanchanaburi',
     image_url: '',
     created_at: '2025-06-15',
     contributions: 8,
@@ -54,7 +67,7 @@ export const sampleMembers = [
     last_name: 'Chaiyo',
     email: 'anan@example.com',
     gender: 'Male',
-    district: 'Uthai Thani',
+    church: 'Uthai Thani',
     image_url: '',
     created_at: '2025-07-01',
     contributions: 2,
@@ -66,7 +79,7 @@ export const sampleMembers = [
     last_name: 'Srisuk',
     email: 'nok@example.com',
     gender: 'Female',
-    district: 'Sing Buri',
+    church: 'Sing Buri',
     image_url: '',
     created_at: '2025-07-10',
     contributions: 10,
@@ -78,7 +91,7 @@ export const sampleMembers = [
     last_name: 'Thongdee',
     email: 'prasit@example.com',
     gender: 'Male',
-    district: 'Suphan Buri',
+    church: 'Suphan Buri',
     image_url: '',
     created_at: '2025-07-15',
     contributions: 1,
@@ -89,7 +102,7 @@ export const sampleMembers = [
 export default function Dashboard() {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filterDistrict, setFilterDistrict] = useState('All');
+  const [filterChurch, setFilterChurch] = useState('All');
   const [filterGender, setFilterGender] = useState('All');
 
   useEffect(() => {
@@ -107,10 +120,10 @@ export default function Dashboard() {
     });
   }, []);
 
-  // Count members per district
-  const districtCounts = DISTRICTS.map(district => ({
-    name: district,
-    count: members.filter(m => m.district === district).length,
+  // Count members per church
+  const churchCounts = CHURCHES.map(church => ({
+    name: church,
+    count: members.filter(m => m.church === church).length,
   }));
 
   // Dashboard stats
@@ -152,10 +165,10 @@ export default function Dashboard() {
   // Filtered members for table and stats
   const filteredMembers = useMemo(() => {
     return members.filter(m =>
-      (filterDistrict === 'All' || m.district === filterDistrict) &&
+      (filterChurch === 'All' || m.church === filterChurch) &&
       (filterGender === 'All' || m.gender === filterGender)
     );
-  }, [members, filterDistrict, filterGender]);
+  }, [members, filterChurch, filterGender]);
 
   // Member growth over time (simple monthly count)
   const growthData = useMemo(() => {
@@ -181,13 +194,13 @@ export default function Dashboard() {
     ],
   };
 
-  // Chart data for members by district
-  const membersByDistrictChartData = {
-    labels: districtCounts.map(d => d.name),
+  // Chart data for members by church
+  const membersByChurchChartData = {
+    labels: churchCounts.map(d => d.name),
     datasets: [
       {
         label: 'Members',
-        data: districtCounts.map(d => d.count),
+        data: churchCounts.map(d => d.count),
         backgroundColor: [
           '#3b82f6', // Suphan Buri (Blue)
           '#f59e42', // Kanchanaburi (Orange)
@@ -230,18 +243,18 @@ export default function Dashboard() {
   // Retention rate (placeholder: percent of members with contributions > 0)
   const retentionRate = members.length > 0 ? Math.round((members.filter(m => m.contributions > 0).length / members.length) * 100) : 0;
 
-  // Most active districts (by total contributions)
-  const districtActivity = DISTRICTS.map(district => ({
-    name: district,
-    total: members.filter(m => m.district === district).reduce((sum, m) => sum + (m.contributions || 0), 0)
+  // Most active churches (by total contributions)
+  const churchActivity = CHURCHES.map(church => ({
+    name: church,
+    total: members.filter(m => m.church === church).reduce((sum, m) => sum + (m.contributions || 0), 0)
   }));
-  const mostActiveDistricts = [...districtActivity].sort((a, b) => b.total - a.total).slice(0, 3);
+  const mostActiveChurches = [...churchActivity].sort((a, b) => b.total - a.total).slice(0, 3);
 
   // Notifications (sample)
   const notifications = [
     { id: 1, message: 'Member profile updated', date: '2025-07-16' },
     { id: 2, message: 'New member joined', date: '2025-07-15' },
-    { id: 3, message: 'District event scheduled', date: '2025-07-14' },
+    { id: 3, message: 'Church event scheduled', date: '2025-07-14' },
   ];
 
   // Admin notes (sample)
@@ -250,7 +263,7 @@ export default function Dashboard() {
     { id: 2, note: 'Please update your profiles.', date: '2025-07-10' },
   ];
 
-  // Member map (placeholder: show district counts)
+  // Member map (placeholder: show church counts)
   // In real app, use a map library and member coordinates
 
   // Recent logins (sample)
@@ -312,16 +325,16 @@ export default function Dashboard() {
                 </div>
               </div>
             </div>
-            {/* Members by District & Age Distribution */}
+            {/* Members by Church & Age Distribution */}
             <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold mb-4">Members by District & Age Distribution</h2>
+              <h2 className="text-lg font-semibold mb-4">Members by Church & Age Distribution</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                 <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-semibold mb-1 text-center">Members by District</h3>
+          <h3 className="text-sm font-semibold mb-1 text-center">Members by Church</h3>
           <div className="flex justify-center mb-2">
           <div style={{ maxWidth: 180, width: '100%' }}>
             <Pie
-              data={membersByDistrictChartData}
+              data={membersByChurchChartData}
               options={{
                 plugins: {
                   legend: { display: false },
@@ -336,29 +349,29 @@ export default function Dashboard() {
             />
           </div>
           </div>
-        {/* Custom 2x2 grid legend for Members by District, aligned left */}
+        {/* Custom 2x2 grid legend for Members by Church, aligned left */}
         <div className="mt-2 flex justify-start">
           <div className="w-full min-w-full overflow-x-auto">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1 w-full min-w-full">
               <div className="flex items-center gap-1 flex-nowrap whitespace-nowrap">
               <span className="inline-block w-6 h-2.5 rounded" style={{ background: '#3b82f6' }}></span>
               <span className="text-xs">Suphan Buri</span>
-              <span className="text-xs font-bold">{districtCounts[0]?.count || 0}</span>
+              <span className="text-xs font-bold">{churchCounts[0]?.count || 0}</span>
             </div>
               <div className="flex items-center gap-1 flex-nowrap whitespace-nowrap">
               <span className="inline-block w-6 h-2.5 rounded" style={{ background: '#f59e42' }}></span>
               <span className="text-xs">Kanchanaburi</span>
-              <span className="text-xs font-bold">{districtCounts[1]?.count || 0}</span>
+              <span className="text-xs font-bold">{churchCounts[1]?.count || 0}</span>
             </div>
               <div className="flex items-center gap-1 flex-nowrap whitespace-nowrap">
               <span className="inline-block w-6 h-2.5 rounded" style={{ background: '#6366f1' }}></span>
               <span className="text-xs">Uthai Thani</span>
-              <span className="text-xs font-bold">{districtCounts[2]?.count || 0}</span>
+              <span className="text-xs font-bold">{churchCounts[2]?.count || 0}</span>
             </div>
               <div className="flex items-center gap-1 flex-nowrap whitespace-nowrap">
               <span className="inline-block w-6 h-2.5 rounded" style={{ background: '#10b981' }}></span>
               <span className="text-xs">Sing Buri</span>
-              <span className="text-xs font-bold">{districtCounts[3]?.count || 0}</span>
+              <span className="text-xs font-bold">{churchCounts[3]?.count || 0}</span>
             </div>
             </div>
           </div>
@@ -413,7 +426,7 @@ export default function Dashboard() {
                 </ul>
               </div>
             </div>
-            {/* Engagement Overview (Retention Rate + Most Active Districts merged) */}
+            {/* Engagement Overview (Retention Rate + Most Active Churches merged) */}
             <div className="bg-white rounded-lg shadow p-6">
               <h2 className="text-lg font-semibold mb-4">Engagement Overview</h2>
               <div className="mb-4">
@@ -421,9 +434,9 @@ export default function Dashboard() {
                 <div className="text-gray-500 mb-2">Member Retention Rate (Members with contributions &gt; 0)</div>
               </div>
               <div>
-                <h3 className="text-md font-semibold mb-2">Most Active Districts</h3>
+                <h3 className="text-md font-semibold mb-2">Most Active Churches</h3>
                 <ul>
-                  {mostActiveDistricts.map(d => (
+                  {mostActiveChurches.map(d => (
                     <li key={d.name} className="flex justify-between py-2 border-b last:border-b-0">
                       <span>{d.name}</span>
                       <span className="font-bold">{d.total}</span>
@@ -433,11 +446,11 @@ export default function Dashboard() {
               </div>
             </div>
             {/* ...existing code... */}
-            {/* Members by District & Map (now only Map) */}
+            {/* Members by Church & Map (now only Map) */}
             <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold mb-4">Member Map (by District)</h2>
+              <h2 className="text-lg font-semibold mb-4">Member Map (by Church)</h2>
               <ul>
-                {districtCounts.map(d => (
+                {churchCounts.map(d => (
                   <li key={d.name} className="flex justify-between py-2 border-b last:border-b-0">
                     <span>{d.name}</span>
                     <span className="font-bold">{d.count || 0}</span>
@@ -560,9 +573,9 @@ export default function Dashboard() {
             <div className="bg-white rounded-lg shadow p-6">
               <h2 className="text-lg font-semibold mb-4">Filter Members & Tags</h2>
               <div className="mb-4 flex gap-2">
-                <select value={filterDistrict} onChange={e => setFilterDistrict(e.target.value)} className="border rounded px-2 py-1">
-                  <option value="All">All Districts</option>
-                  {DISTRICTS.map(d => <option key={d} value={d}>{d}</option>)}
+                <select value={filterChurch} onChange={e => setFilterChurch(e.target.value)} className="border rounded px-2 py-1">
+                  <option value="All">All Churches</option>
+                  {CHURCHES.map(d => <option key={d} value={d}>{d}</option>)}
                 </select>
                 <select value={filterGender} onChange={e => setFilterGender(e.target.value)} className="border rounded px-2 py-1">
                   <option value="All">All Genders</option>
@@ -583,7 +596,7 @@ export default function Dashboard() {
                   <thead>
                     <tr>
                       <th className="text-left py-2 px-2">Name</th>
-                      <th className="text-left py-2 px-2">District</th>
+                      <th className="text-left py-2 px-2">Church</th>
                       <th className="text-left py-2 px-2">Gender</th>
                       <th className="text-left py-2 px-2">Email</th>
                     </tr>
@@ -595,7 +608,7 @@ export default function Dashboard() {
                       filteredMembers.map(m => (
                         <tr key={m.id}>
                           <td className="py-1 px-2">{m.first_name} {m.last_name}</td>
-                          <td className="py-1 px-2">{m.district}</td>
+                          <td className="py-1 px-2">{m.church}</td>
                           <td className="py-1 px-2">{m.gender}</td>
                           <td className="py-1 px-2">{m.email}</td>
                         </tr>
@@ -612,8 +625,8 @@ export default function Dashboard() {
               className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
               onClick={() => {
                 const csv = [
-                  ['Name', 'District', 'Gender', 'Email'],
-                  ...members.map(m => [m.first_name + ' ' + m.last_name, m.district, m.gender, m.email])
+                  ['Name', 'Church', 'Gender', 'Email'],
+                  ...members.map(m => [m.first_name + ' ' + m.last_name, m.church, m.gender, m.email])
                 ].map(row => row.join(',')).join('\n');
                 const blob = new Blob([csv], { type: 'text/csv' });
                 const url = URL.createObjectURL(blob);
@@ -634,7 +647,7 @@ export default function Dashboard() {
               <li>Display upcoming birthdays or anniversaries</li>
               <li>Highlight new members this month</li>
               <li>Show member retention rate</li>
-              <li>Display most active districts</li>
+              <li>Display most active churches</li>
               <li>Show average contributions per member</li>
               <li>Integrate notifications for important updates</li>
               <li>Allow admins to add notes or announcements</li>
