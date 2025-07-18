@@ -9,24 +9,24 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
   return (
     <div
       className={`h-screen bg-white fixed left-0 top-0 z-30 transition-all duration-300 overflow-hidden ${
-        collapsed ? 'w-20' : 'w-72'
+        collapsed ? 'w-16' : 'w-64'
       } flex flex-col border-r border-gray-200 shadow-sm`}
     >
       {/* Logo Section */}
-      <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
+      <div className={`flex items-center ${collapsed ? 'justify-center' : 'justify-between'} h-16 px-4 border-b border-gray-200`}>
         {!collapsed && (
           <div className="flex items-center">
             <span className="text-xl font-bold text-gray-800">SKUS ProFile</span>
           </div>
         )}
         <button
-          className="p-1.5 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200"
+          className="p-1 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200"
           onClick={() => setCollapsed(!collapsed)}
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className={`h-6 w-6 text-gray-500 transition-transform duration-200 ${collapsed ? 'rotate-180' : ''}`}
+            className={`h-5 w-5 text-gray-500 transition-transform duration-200 ${collapsed ? 'rotate-180' : ''}`}
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -48,12 +48,12 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
                   : 'text-gray-700 hover:bg-gray-100'
               }`}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className={`w-6 h-6 ${isActive('/') ? 'text-blue-600' : 'text-gray-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" className={`w-7 h-7 ${isActive('/') ? 'text-blue-600' : 'text-gray-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
               </svg>
               {!collapsed && <span className="ml-3 font-medium">Dashboard</span>}
               {collapsed && (
-                <div className="fixed left-20 rounded-md px-2 py-1 ml-1 bg-gray-900 text-white text-sm invisible opacity-0 scale-95 group-hover:visible group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 whitespace-nowrap shadow-lg">
+                <div className="fixed left-16 rounded-md px-2 py-1 ml-2 bg-gray-900 text-white text-sm invisible opacity-0 scale-95 group-hover:visible group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 whitespace-nowrap shadow-lg">
                   Dashboard
                 </div>
               )}
@@ -70,7 +70,7 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
             >
               <svg 
                 xmlns="http://www.w3.org/2000/svg" 
-                className={`w-6 h-6 ${isActive('/members') ? 'text-blue-600' : 'text-gray-400'}`} 
+                className={`w-7 h-7 ${isActive('/members') ? 'text-blue-600' : 'text-gray-400'}`} 
                 fill="none" 
                 viewBox="0 0 24 24" 
                 stroke="currentColor"
@@ -79,7 +79,7 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
               </svg>
               {!collapsed && <span className="ml-3 font-medium">Members</span>}
               {collapsed && (
-                <div className="fixed left-20 rounded-md px-2 py-1 ml-1 bg-gray-900 text-white text-sm invisible opacity-0 scale-95 group-hover:visible group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 whitespace-nowrap shadow-lg">
+                <div className="fixed left-16 rounded-md px-2 py-1 ml-2 bg-gray-900 text-white text-sm invisible opacity-0 scale-95 group-hover:visible group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 whitespace-nowrap shadow-lg">
                   Members
                 </div>
               )}
@@ -96,7 +96,7 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
             >
               <svg 
                 xmlns="http://www.w3.org/2000/svg" 
-                className={`w-6 h-6 ${isActive('/events') ? 'text-blue-600' : 'text-gray-400'}`} 
+                className={`w-7 h-7 ${isActive('/events') ? 'text-blue-600' : 'text-gray-400'}`} 
                 fill="none" 
                 viewBox="0 0 24 24" 
                 stroke="currentColor"
@@ -105,7 +105,7 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
               </svg>
               {!collapsed && <span className="ml-3 font-medium">Events</span>}
               {collapsed && (
-                <div className="fixed left-20 rounded-md px-2 py-1 ml-1 bg-gray-900 text-white text-sm invisible opacity-0 scale-95 group-hover:visible group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 whitespace-nowrap shadow-lg">
+                <div className="fixed left-16 rounded-md px-2 py-1 ml-2 bg-gray-900 text-white text-sm invisible opacity-0 scale-95 group-hover:visible group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 whitespace-nowrap shadow-lg">
                   Events
                 </div>
               )}
@@ -122,7 +122,7 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
             >
               <svg 
                 xmlns="http://www.w3.org/2000/svg" 
-                className={`w-6 h-6 ${isActive('/settings') ? 'text-blue-600' : 'text-gray-400'}`} 
+                className={`w-7 h-7 ${isActive('/settings') ? 'text-blue-600' : 'text-gray-400'}`} 
                 fill="none" 
                 viewBox="0 0 24 24" 
                 stroke="currentColor"
@@ -132,7 +132,7 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
               </svg>
               {!collapsed && <span className="ml-3 font-medium">Settings</span>}
               {collapsed && (
-                <div className="fixed left-20 rounded-md px-2 py-1 ml-1 bg-gray-900 text-white text-sm invisible opacity-0 scale-95 group-hover:visible group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 whitespace-nowrap shadow-lg">
+                <div className="fixed left-16 rounded-md px-2 py-1 ml-2 bg-gray-900 text-white text-sm invisible opacity-0 scale-95 group-hover:visible group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 whitespace-nowrap shadow-lg">
                   Settings
                 </div>
               )}

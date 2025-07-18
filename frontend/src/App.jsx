@@ -12,7 +12,7 @@ export default function App() {
       <Sidebar collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} />
       <div 
         className={`flex-1 transition-all duration-300 ${
-          sidebarCollapsed ? 'ml-20' : 'ml-72'
+          sidebarCollapsed ? 'ml-16' : 'ml-64'
         }`}
       >
         <Routes>
