@@ -269,7 +269,7 @@ export default function Dashboard() {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">SKUS ProFile Dashboard</h1>
+      <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
       {loading ? (
         <div>Loading...</div>
       ) : (

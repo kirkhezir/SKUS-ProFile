@@ -2,12 +2,19 @@ import Members from './pages/Members';
 import Dashboard from './pages/Dashboard';
 import Sidebar from './components/Sidebar';
 import { Routes, Route } from 'react-router-dom';
+import { useState } from 'react';
 
 export default function App() {
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
   return (
     <div className="min-h-screen bg-gray-100 flex">
-      <Sidebar />
-      <div className="flex-1">
+      <Sidebar collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} />
+      <div 
+        className={`flex-1 transition-all duration-300 ${
+          sidebarCollapsed ? 'ml-20' : 'ml-72'
+        }`}
+      >
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/members" element={<Members />} />

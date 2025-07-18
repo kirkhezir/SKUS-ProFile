@@ -117,7 +117,7 @@ export default function Members() {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-8">
       <h1 className="text-3xl font-bold mb-8 text-gray-900">Members</h1>
       <div className="mb-6 flex flex-wrap gap-3 items-center bg-white p-4 rounded-lg shadow border border-gray-200">
         <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name or email" className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400" />

@@ -1,54 +1,140 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
-const Sidebar = () => {
-  const [collapsed, setCollapsed] = useState(false);
+const Sidebar = ({ collapsed, setCollapsed }) => {
+  const location = useLocation();
+
+  const isActive = (path) => location.pathname === path;
 
   return (
     <div
-      className={`h-screen bg-white text-gray-800 transition-all duration-300 ${collapsed ? 'w-16' : 'w-64'} flex flex-col border-r shadow-md`}
+      className={`h-screen bg-white fixed left-0 top-0 z-30 transition-all duration-300 ${
+        collapsed ? 'w-20' : 'w-72'
+      } flex flex-col border-r border-gray-200 shadow-sm`}
     >
-      <button
-        className="p-2 focus:outline-none hover:bg-gray-100 rounded"
-        onClick={() => setCollapsed(!collapsed)}
-        aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-      >
-        {collapsed ? (
-          <span>&#9776;</span>
-        ) : (
-          <span>&#10005;</span>
+      {/* Logo Section */}
+      <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
+        {!collapsed && (
+          <div className="flex items-center">
+            <span className="text-xl font-bold text-gray-800">SKUS ProFile</span>
+          </div>
         )}
-      </button>
-      <nav className="flex-1 mt-4">
-        <ul className="space-y-2">
+        <button
+          className="p-1.5 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200"
+          onClick={() => setCollapsed(!collapsed)}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className={`h-6 w-6 text-gray-500 transition-transform duration-200 ${collapsed ? 'rotate-180' : ''}`}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex-1 overflow-y-auto py-4">
+        <ul className="space-y-1 px-3">
           <li>
-            <Link to="/" className="flex items-center px-4 py-2 hover:bg-gray-100 rounded justify-center md:justify-start">
-              {/* Heroicons: Squares2x2 for Dashboard */}
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75h6.5v6.5h-6.5v-6.5zm10 0h6.5v6.5h-6.5v-6.5zm-10 10h6.5v6.5h-6.5v-6.5zm10 0h6.5v6.5h-6.5v-6.5z" />
+            <Link
+              to="/"
+              className={`flex items-center px-3 py-2.5 rounded-lg transition-colors duration-200 ${
+                isActive('/') 
+                  ? 'bg-blue-50 text-blue-700' 
+                  : 'text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className={`w-6 h-6 ${isActive('/') ? 'text-blue-600' : 'text-gray-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
               </svg>
-              {!collapsed && <span className="ml-3">Dashboard</span>}
+              {!collapsed && <span className="ml-3 font-medium">Dashboard</span>}
             </Link>
           </li>
           <li>
-            <Link to="/members" className="flex items-center px-4 py-2 hover:bg-gray-100 rounded justify-center md:justify-start">
-              {/* Flaticon group icon for Members */}
-              <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="currentColor">
-                <g data-name="Capa 3" id="Capa_3">
-                  <path d="M382.54,386.41H129.76a6,6,0,0,1-6-6A131.08,131.08,0,0,1,152,298.71a132.39,132.39,0,0,1,236.57,81.7A6,6,0,0,1,382.54,386.41Zm-246.63-12H376.39a120.37,120.37,0,0,0-215-68.29A119,119,0,0,0,135.91,374.41Z"/>
-                  <path d="M256.15,255.52a65,65,0,1,1,65-65A65,65,0,0,1,256.15,255.52Zm0-117.93a53,53,0,1,0,53,53A53,53,0,0,0,256.15,137.59Z"/>
-                  <path d="M156.69,308.42H68.45a6,6,0,0,1-6-6,89.75,89.75,0,0,1,166-47.27,6,6,0,0,1-3.55,9,121.22,121.22,0,0,0-63.52,42A6,6,0,0,1,156.69,308.42Zm-82-12h79.13a133.52,133.52,0,0,1,60-41.46A77.75,77.75,0,0,0,74.68,296.42Z"/>
-                  <path d="M152.19,221.69a45.07,45.07,0,1,1,45.06-45.06A45.11,45.11,0,0,1,152.19,221.69Zm0-78.13a33.07,33.07,0,1,0,33.06,33.07A33.1,33.1,0,0,0,152.19,143.56Z"/>
-                  <path d="M443.55,307.11h-89a6,6,0,0,1-4.67-2.23,121.14,121.14,0,0,0-63.44-41,6,6,0,0,1-3.63-8.9,89.74,89.74,0,0,1,166.72,46.13A6,6,0,0,1,443.55,307.11Zm-86.15-12h79.92a77.75,77.75,0,0,0-139.83-40.49A133.61,133.61,0,0,1,357.4,295.11Z"/>
-                  <path d="M359.81,220.39a45.07,45.07,0,1,1,45.07-45.07A45.11,45.11,0,0,1,359.81,220.39Zm0-78.14a33.07,33.07,0,1,0,33.07,33.07A33.1,33.1,0,0,0,359.81,142.25Z"/>
-                </g>
+            <Link
+              to="/members"
+              className={`flex items-center px-3 py-2.5 rounded-lg transition-colors duration-200 ${
+                isActive('/members')
+                  ? 'bg-blue-50 text-blue-700'
+                  : 'text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                className={`w-6 h-6 ${isActive('/members') ? 'text-blue-600' : 'text-gray-400'}`} 
+                fill="none" 
+                viewBox="0 0 24 24" 
+                stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
               </svg>
-              {!collapsed && <span className="ml-3">Members</span>}
+              {!collapsed && <span className="ml-3 font-medium">Members</span>}
             </Link>
           </li>
-          {/* Add more links as needed */}
+          <li>
+            <Link
+              to="/events"
+              className={`flex items-center px-3 py-2.5 rounded-lg transition-colors duration-200 ${
+                isActive('/events')
+                  ? 'bg-blue-50 text-blue-700'
+                  : 'text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                className={`w-6 h-6 ${isActive('/events') ? 'text-blue-600' : 'text-gray-400'}`} 
+                fill="none" 
+                viewBox="0 0 24 24" 
+                stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              {!collapsed && <span className="ml-3 font-medium">Events</span>}
+            </Link>
+          </li>
+          <li>
+            <Link
+              to="/settings"
+              className={`flex items-center px-3 py-2.5 rounded-lg transition-colors duration-200 ${
+                isActive('/settings')
+                  ? 'bg-blue-50 text-blue-700'
+                  : 'text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                className={`w-6 h-6 ${isActive('/settings') ? 'text-blue-600' : 'text-gray-400'}`} 
+                fill="none" 
+                viewBox="0 0 24 24" 
+                stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              {!collapsed && <span className="ml-3 font-medium">Settings</span>}
+            </Link>
+          </li>
         </ul>
       </nav>
+
+      {/* User Profile Section */}
+      <div className={`border-t border-gray-200 p-4 ${collapsed ? 'items-center' : ''}`}>
+        <div className={`flex ${collapsed ? 'justify-center' : 'items-center space-x-3'}`}>
+          <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold">
+            A
+          </div>
+          {!collapsed && (
+            <div className="flex-1">
+              <h3 className="text-sm font-semibold text-gray-700">Admin User</h3>
+              <p className="text-xs text-gray-500">admin@memberhub.com</p>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
