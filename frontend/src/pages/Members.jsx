@@ -1,6 +1,30 @@
-
 import React, { useState, useMemo } from 'react';
 import { DISTRICTS, sampleMembers } from './Dashboard';
+
+// Add custom scrollbar styles
+const customScrollbarStyles = `
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #a1a1a1;
+  }
+`;
+
+// Add styles to head
+if (typeof document !== 'undefined') {
+  const style = document.createElement('style');
+  style.textContent = customScrollbarStyles;
+  document.head.appendChild(style);
+}
 
 const TAGS = ['Committee', 'Volunteer', 'Alumni'];
 
@@ -33,6 +57,7 @@ export default function Members() {
   const [selected, setSelected] = useState([]);
   const [showProfile, setShowProfile] = useState(null);
   const [showAdd, setShowAdd] = useState(false);
+  const [showEdit, setShowEdit] = useState(null);
   const [newMember, setNewMember] = useState({ first_name: '', last_name: '', email: '', gender: 'Male', district: DISTRICTS[0], tags: [] });
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
@@ -166,7 +191,7 @@ export default function Members() {
                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                     </button>
                     {/* Edit Icon */}
-                    <button title="Edit" className="p-1 mr-2" style={{ color: '#059669', background: '#ecfdf5', borderRadius: '6px' }} onClick={() => {/* TODO: implement edit modal */}}>
+                    <button title="Edit" className="p-1 mr-2" style={{ color: '#059669', background: '#ecfdf5', borderRadius: '6px' }} onClick={() => setShowEdit(m)}>
                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 20h9" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16.5 3.5a2.121 2.121 0 113 3L7 19l-4 1 1-4 12.5-12.5z" /></svg>
                     </button>
                     {/* Delete Icon (Trash) */}
@@ -214,34 +239,202 @@ export default function Members() {
           </div>
         </div>
       )}
+      {/* Edit Member Modal */}
+      {showEdit && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm">
+          <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md transform transition-all max-h-[90vh] flex flex-col">
+            <div className="flex justify-between items-center mb-6 flex-shrink-0">
+              <h2 className="text-2xl font-bold text-gray-800">Edit Member</h2>
+              <button onClick={() => setShowEdit(null)} className="text-gray-500 hover:text-gray-700 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="space-y-4 overflow-y-auto flex-grow pr-2 custom-scrollbar">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                <input 
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" 
+                  placeholder="Enter first name" 
+                  value={showEdit.first_name} 
+                  onChange={e => setShowEdit({ ...showEdit, first_name: e.target.value })} 
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                <input 
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" 
+                  placeholder="Enter last name" 
+                  value={showEdit.last_name} 
+                  onChange={e => setShowEdit({ ...showEdit, last_name: e.target.value })} 
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input 
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" 
+                  placeholder="Enter email address" 
+                  value={showEdit.email} 
+                  onChange={e => setShowEdit({ ...showEdit, email: e.target.value })} 
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+                <select 
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" 
+                  value={showEdit.gender} 
+                  onChange={e => setShowEdit({ ...showEdit, gender: e.target.value })}
+                >
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">District</label>
+                <select 
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" 
+                  value={showEdit.district} 
+                  onChange={e => setShowEdit({ ...showEdit, district: e.target.value })}
+                >
+                  {DISTRICTS.map(d => <option key={d} value={d}>{d}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Tags</label>
+                <div className="flex flex-wrap gap-2">
+                  {TAGS.map(tag => (
+                    <label key={tag} className="inline-flex items-center">
+                      <input 
+                        type="checkbox" 
+                        className="form-checkbox h-4 w-4 text-blue-600 transition duration-150 ease-in-out" 
+                        checked={(showEdit.tags || []).includes(tag)} 
+                        onChange={e => {
+                          if (e.target.checked) setShowEdit({ ...showEdit, tags: [...(showEdit.tags || []), tag] });
+                          else setShowEdit({ ...showEdit, tags: (showEdit.tags || []).filter(t => t !== tag) });
+                        }} 
+                      />
+                      <span className="ml-2 text-sm text-gray-700">{tag}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 mt-8 flex-shrink-0 pt-4 border-t border-gray-100">
+              <button 
+                className="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors" 
+                onClick={() => setShowEdit(null)}
+              >
+                Cancel
+              </button>
+              <button 
+                className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors" 
+                onClick={() => {
+                  handleEdit(showEdit.id, showEdit);
+                  setShowEdit(null);
+                }}
+              >
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Add Member Modal */}
       {showAdd && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded shadow-lg w-full max-w-md">
-            <h2 className="text-xl font-bold mb-2">Add Member</h2>
-            <input className="border rounded px-2 py-1 mb-2 w-full" placeholder="First Name" value={newMember.first_name} onChange={e => setNewMember({ ...newMember, first_name: e.target.value })} />
-            <input className="border rounded px-2 py-1 mb-2 w-full" placeholder="Last Name" value={newMember.last_name} onChange={e => setNewMember({ ...newMember, last_name: e.target.value })} />
-            <input className="border rounded px-2 py-1 mb-2 w-full" placeholder="Email" value={newMember.email} onChange={e => setNewMember({ ...newMember, email: e.target.value })} />
-            <select className="border rounded px-2 py-1 mb-2 w-full" value={newMember.gender} onChange={e => setNewMember({ ...newMember, gender: e.target.value })}>
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-            </select>
-            <select className="border rounded px-2 py-1 mb-2 w-full" value={newMember.district} onChange={e => setNewMember({ ...newMember, district: e.target.value })}>
-              {DISTRICTS.map(d => <option key={d} value={d}>{d}</option>)}
-            </select>
-            <div className="mb-2">
-              <span className="font-semibold">Tags:</span>
-              {TAGS.map(tag => (
-                <label key={tag} className="ml-2">
-                  <input type="checkbox" checked={newMember.tags.includes(tag)} onChange={e => {
-                    if (e.target.checked) setNewMember({ ...newMember, tags: [...newMember.tags, tag] });
-                    else setNewMember({ ...newMember, tags: newMember.tags.filter(t => t !== tag) });
-                  }} /> {tag}
-                </label>
-              ))}
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm">
+          <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md transform transition-all max-h-[90vh] flex flex-col">
+            <div className="flex justify-between items-center mb-6 flex-shrink-0">
+              <h2 className="text-2xl font-bold text-gray-800">Add New Member</h2>
+              <button onClick={() => setShowAdd(false)} className="text-gray-500 hover:text-gray-700 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             </div>
-            <button className="bg-blue-500 text-white px-4 py-2 rounded mr-2" onClick={handleAdd}>Add</button>
-            <button className="bg-gray-300 px-4 py-2 rounded" onClick={() => setShowAdd(false)}>Cancel</button>
+            <div className="space-y-4 overflow-y-auto flex-grow pr-2 custom-scrollbar">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                <input 
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" 
+                  placeholder="Enter first name" 
+                  value={newMember.first_name} 
+                  onChange={e => setNewMember({ ...newMember, first_name: e.target.value })} 
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                <input 
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" 
+                  placeholder="Enter last name" 
+                  value={newMember.last_name} 
+                  onChange={e => setNewMember({ ...newMember, last_name: e.target.value })} 
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input 
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" 
+                  placeholder="Enter email address" 
+                  value={newMember.email} 
+                  onChange={e => setNewMember({ ...newMember, email: e.target.value })} 
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+                <select 
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" 
+                  value={newMember.gender} 
+                  onChange={e => setNewMember({ ...newMember, gender: e.target.value })}
+                >
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">District</label>
+                <select 
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" 
+                  value={newMember.district} 
+                  onChange={e => setNewMember({ ...newMember, district: e.target.value })}
+                >
+                  {DISTRICTS.map(d => <option key={d} value={d}>{d}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Tags</label>
+                <div className="flex flex-wrap gap-2">
+                  {TAGS.map(tag => (
+                    <label key={tag} className="inline-flex items-center">
+                      <input 
+                        type="checkbox" 
+                        className="form-checkbox h-4 w-4 text-blue-600 transition duration-150 ease-in-out" 
+                        checked={newMember.tags.includes(tag)} 
+                        onChange={e => {
+                          if (e.target.checked) setNewMember({ ...newMember, tags: [...newMember.tags, tag] });
+                          else setNewMember({ ...newMember, tags: newMember.tags.filter(t => t !== tag) });
+                        }} 
+                      />
+                      <span className="ml-2 text-sm text-gray-700">{tag}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 mt-8 flex-shrink-0 pt-4 border-t border-gray-100">
+              <button 
+                className="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors" 
+                onClick={() => setShowAdd(false)}
+              >
+                Cancel
+              </button>
+              <button 
+                className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors" 
+                onClick={handleAdd}
+              >
+                Add Member
+              </button>
+            </div>
           </div>
         </div>
       )}
