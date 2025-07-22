@@ -240,6 +240,71 @@ export default function Dashboard() {
     return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
   });
 
+  // Previous month for comparison
+  const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+  const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+  const newMembersLastMonth = members.filter(m => {
+    const d = new Date(m.created_at);
+    return d.getMonth() === lastMonth && d.getFullYear() === lastMonthYear;
+  });
+
+  // Growth calculation
+  const monthlyGrowthRate = newMembersLastMonth.length > 0 
+    ? Math.round(((newMembersThisMonth.length - newMembersLastMonth.length) / newMembersLastMonth.length) * 100)
+    : 0;
+
+  // Member health metrics
+  const now = new Date();
+  const activeMembersCount = members.filter(m => m.contributions > 0).length;
+  const inactiveMembers = members.filter(m => m.contributions === 0);
+  const atRiskMembers = members.filter(m => {
+    const joinDate = new Date(m.created_at);
+    const daysSinceJoined = Math.floor((now - joinDate) / (1000 * 60 * 60 * 24));
+    return daysSinceJoined > 30 && m.contributions === 0;
+  });
+
+  // Actionable items
+  const incompleteProfiles = members.filter(m => !m.image_url || !m.email).length;
+  const needsWelcome = newMembersThisMonth.filter(m => {
+    const joinDate = new Date(m.created_at);
+    const daysSinceJoined = Math.floor((now - joinDate) / (1000 * 60 * 60 * 24));
+    return daysSinceJoined <= 7;
+  }).length;
+
+  // Engagement score (0-100)
+  const engagementScore = members.length > 0 
+    ? Math.round((activeMembersCount / members.length) * 100) 
+    : 0;
+
+  // Church performance metrics
+  const churchPerformance = CHURCHES.map(church => {
+    const churchMembers = members.filter(m => m.church === church);
+    const activeInChurch = churchMembers.filter(m => m.contributions > 0).length;
+    const newThisMonth = churchMembers.filter(m => {
+      const d = new Date(m.created_at);
+      return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+    }).length;
+    
+    return {
+      name: church,
+      total: churchMembers.length,
+      active: activeInChurch,
+      newThisMonth,
+      engagementRate: churchMembers.length > 0 ? Math.round((activeInChurch / churchMembers.length) * 100) : 0,
+      growthRate: newThisMonth
+    };
+  }).sort((a, b) => b.engagementRate - a.engagementRate);
+
+  // Upcoming events/birthdays (next 7 days for urgency)
+  const urgentBirthdays = members.filter(m => {
+    if (!m.birthday) return false;
+    const today = new Date();
+    const bday = new Date(m.birthday);
+    bday.setFullYear(today.getFullYear());
+    const diff = (bday - today) / (1000 * 60 * 60 * 24);
+    return diff >= 0 && diff <= 7;
+  });
+
   // Retention rate (placeholder: percent of members with contributions > 0)
   const retentionRate = members.length > 0 ? Math.round((members.filter(m => m.contributions > 0).length / members.length) * 100) : 0;
 
@@ -282,383 +347,313 @@ export default function Dashboard() {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
+      <h1 className="text-2xl font-bold mb-6">Church Member Dashboard</h1>
       {loading ? (
-        <div>Loading...</div>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-lg text-gray-600">Loading dashboard...</div>
+        </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            {/* Quick Stats & Gender Ratio */}
+          {/* Executive Summary - Key Metrics */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div className="bg-white rounded-lg shadow p-6 border-l-4 border-blue-500">
+              <h3 className="text-sm font-medium text-gray-600 mb-2">Total Members</h3>
+              <div className="text-3xl font-bold text-gray-900">{totalMembers}</div>
+              <div className="text-sm text-gray-500 mt-1">
+                {newMembersThisMonth.length} new this month
+              </div>
+            </div>
+            
+            <div className="bg-white rounded-lg shadow p-6 border-l-4 border-green-500">
+              <h3 className="text-sm font-medium text-gray-600 mb-2">Monthly Growth</h3>
+              <div className="text-3xl font-bold text-gray-900">
+                {monthlyGrowthRate >= 0 ? '+' : ''}{monthlyGrowthRate}%
+              </div>
+              <div className="text-sm text-gray-500 mt-1">
+                vs. last month
+              </div>
+            </div>
+            
+            <div className="bg-white rounded-lg shadow p-6 border-l-4 border-yellow-500">
+              <h3 className="text-sm font-medium text-gray-600 mb-2">Active Members</h3>
+              <div className="text-3xl font-bold text-gray-900">{activeMembersCount}</div>
+              <div className="text-sm text-gray-500 mt-1">
+                {inactiveMembers.length} inactive
+              </div>
+            </div>
+            
+            <div className="bg-white rounded-lg shadow p-6 border-l-4 border-purple-500">
+              <h3 className="text-sm font-medium text-gray-600 mb-2">Engagement Score</h3>
+              <div className="text-3xl font-bold text-gray-900">{engagementScore}%</div>
+              <div className="text-sm text-gray-500 mt-1">
+                Overall health
+              </div>
+            </div>
+          </div>
+
+          {/* Action Required Section */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold mb-4">Quick Stats</h2>
-              <div className="flex flex-col md:flex-row gap-6 items-start">
-                <ul className="flex-1">
-                  <li className="flex justify-between py-2 border-b last:border-b-0">
-                    <span>Total Members</span>
-                    <span className="font-bold">{totalMembers || 0}</span>
-                  </li>
-                  <li className="flex justify-between py-2 border-b last:border-b-0">
-                    <span>Male</span>
-                    <span className="font-bold">{maleCount || 0}</span>
-                  </li>
-                  <li className="flex justify-between py-2 border-b last:border-b-0">
-                    <span>Female</span>
-                    <span className="font-bold">{femaleCount || 0}</span>
-                  </li>
-                </ul>
-                <div className="flex-1 flex flex-col items-center">
-                  <h3 className="text-sm font-semibold mb-1">Gender Ratio</h3>
-                  <div style={{ maxWidth: 140, width: '100%' }}>
-                    <Doughnut data={genderRatioChartData} options={{ plugins: { legend: { display: false } } }} />
-                  </div>
-                  {/* Custom horizontal legend for Gender Ratio */}
-                  <div className="flex justify-center gap-4 mt-2">
-                    <div className="flex items-center gap-1">
-                      <span className="inline-block w-4 h-3 rounded" style={{ background: '#3b82f6' }}></span>
-                      <span className="text-xs">Male</span>
+              <div className="flex items-center mb-4">
+                <div className="w-2 h-8 bg-red-500 rounded mr-3"></div>
+                <h2 className="text-lg font-semibold text-gray-900">Requires Attention</h2>
+              </div>
+              <div className="space-y-3">
+                {atRiskMembers.length > 0 && (
+                  <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
+                    <div>
+                      <span className="font-medium text-red-900">At-Risk Members</span>
+                      <p className="text-sm text-red-700">Joined 30+ days ago, no contributions</p>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <span className="inline-block w-4 h-3 rounded" style={{ background: '#f59e42' }}></span>
-                      <span className="text-xs">Female</span>
+                    <span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold">
+                      {atRiskMembers.length}
+                    </span>
+                  </div>
+                )}
+                
+                {incompleteProfiles > 0 && (
+                  <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
+                    <div>
+                      <span className="font-medium text-yellow-900">Incomplete Profiles</span>
+                      <p className="text-sm text-yellow-700">Missing photo or email</p>
+                    </div>
+                    <span className="bg-yellow-500 text-white px-3 py-1 rounded-full text-sm font-bold">
+                      {incompleteProfiles}
+                    </span>
+                  </div>
+                )}
+                
+                {needsWelcome > 0 && (
+                  <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                    <div>
+                      <span className="font-medium text-blue-900">New Members</span>
+                      <p className="text-sm text-blue-700">Need welcome follow-up</p>
+                    </div>
+                    <span className="bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-bold">
+                      {needsWelcome}
+                    </span>
+                  </div>
+                )}
+
+                {atRiskMembers.length === 0 && incompleteProfiles === 0 && needsWelcome === 0 && (
+                  <div className="text-center py-4 text-gray-500">
+                    <div className="text-green-500 text-2xl mb-2">✓</div>
+                    All members are up to date!
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg shadow p-6">
+              <div className="flex items-center mb-4">
+                <div className="w-2 h-8 bg-green-500 rounded mr-3"></div>
+                <h2 className="text-lg font-semibold text-gray-900">Opportunities</h2>
+              </div>
+              <div className="space-y-3">
+                {urgentBirthdays.length > 0 && (
+                  <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                    <div>
+                      <span className="font-medium text-green-900">Birthdays This Week</span>
+                      <p className="text-sm text-green-700">Send birthday wishes</p>
+                    </div>
+                    <span className="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-bold">
+                      {urgentBirthdays.length}
+                    </span>
+                  </div>
+                )}
+                
+                {topContributors.length > 0 && (
+                  <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                    <div>
+                      <span className="font-medium text-purple-900">Top Contributors</span>
+                      <p className="text-sm text-purple-700">Recognize their efforts</p>
+                    </div>
+                    <span className="bg-purple-500 text-white px-3 py-1 rounded-full text-sm font-bold">
+                      {topContributors.length}
+                    </span>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between p-3 bg-indigo-50 rounded-lg">
+                  <div>
+                    <span className="font-medium text-indigo-900">Volunteer Potential</span>
+                    <p className="text-sm text-indigo-700">Active members without roles</p>
+                  </div>
+                  <span className="bg-indigo-500 text-white px-3 py-1 rounded-full text-sm font-bold">
+                    {Math.max(0, activeMembersCount - topContributors.length)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+          {/* Operational Analytics */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-lg font-semibold mb-4">Church Performance</h2>
+              <div className="space-y-4">
+                {churchPerformance.map((church, index) => (
+                  <div key={church.name} className="border-b last:border-b-0 pb-3 last:pb-0">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{church.name}</span>
+                        {index === 0 && (
+                          <span className="text-yellow-500 text-sm" title="Top Performing Church">👑</span>
+                        )}
+                      </div>
+                      <div className="flex items-center">
+                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                          church.engagementRate >= 70 ? 'bg-green-100 text-green-800' :
+                          church.engagementRate >= 50 ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-red-100 text-red-800'
+                        }`}>
+                          {church.engagementRate}%
+                        </span>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-4 text-sm text-gray-600">
+                      <div>
+                        <span className="font-medium">{church.total}</span> total
+                      </div>
+                      <div>
+                        <span className="font-medium">{church.active}</span> active
+                      </div>
+                      <div>
+                        <span className="font-medium">{church.newThisMonth}</span> new
+                      </div>
                     </div>
                   </div>
-                </div>
-              </div>
-            </div>
-            {/* Members by Church & Age Distribution */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold mb-4">Members by Church & Age Distribution</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-                <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-semibold mb-1 text-center">Members by Church</h3>
-          <div className="flex justify-center mb-2">
-          <div style={{ maxWidth: 180, width: '100%' }}>
-            <Pie
-              data={membersByChurchChartData}
-              options={{
-                plugins: {
-                  legend: { display: false },
-                  datalabels: {
-                    color: '#222',
-                    font: { weight: 'bold' },
-                    formatter: (value) => value,
-                  },
-                },
-              }}
-              plugins={[ChartDataLabels]}
-            />
-          </div>
-          </div>
-        {/* Custom 2x2 grid legend for Members by Church, aligned left */}
-        <div className="mt-2 flex justify-start">
-          <div className="w-full min-w-full overflow-x-auto">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1 w-full min-w-full">
-              <div className="flex items-center gap-1 flex-nowrap whitespace-nowrap">
-              <span className="inline-block w-6 h-2.5 rounded" style={{ background: '#3b82f6' }}></span>
-              <span className="text-xs">Suphan Buri</span>
-              <span className="text-xs font-bold">{churchCounts[0]?.count || 0}</span>
-            </div>
-              <div className="flex items-center gap-1 flex-nowrap whitespace-nowrap">
-              <span className="inline-block w-6 h-2.5 rounded" style={{ background: '#f59e42' }}></span>
-              <span className="text-xs">Kanchanaburi</span>
-              <span className="text-xs font-bold">{churchCounts[1]?.count || 0}</span>
-            </div>
-              <div className="flex items-center gap-1 flex-nowrap whitespace-nowrap">
-              <span className="inline-block w-6 h-2.5 rounded" style={{ background: '#6366f1' }}></span>
-              <span className="text-xs">Uthai Thani</span>
-              <span className="text-xs font-bold">{churchCounts[2]?.count || 0}</span>
-            </div>
-              <div className="flex items-center gap-1 flex-nowrap whitespace-nowrap">
-              <span className="inline-block w-6 h-2.5 rounded" style={{ background: '#10b981' }}></span>
-              <span className="text-xs">Sing Buri</span>
-              <span className="text-xs font-bold">{churchCounts[3]?.count || 0}</span>
-            </div>
-            </div>
-          </div>
-        </div>
-                </div>
-                <div className="flex-1">
-          <h3 className="text-sm font-semibold mb-1 text-center">Age Distribution</h3>
-          <div className="flex justify-center items-center mb-2 h-auto md:h-[220px] max-w-full w-full overflow-x-auto">
-            <div className="flex-1 h-auto md:h-full max-w-full w-full">
-              <Bar data={ageDistributionChartData} options={{
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: { x: { title: { display: true, text: 'Age Group' } }, y: { title: { display: true, text: 'Members' }, beginAtZero: true } }
-              }} height={220} />
-            </div>
-          </div>
-                </div>
-              </div>
-            </div>
-            {/* New Members & Upcoming Birthdays (merged) */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold mb-4">New Members & Upcoming Birthdays</h2>
-              <div className="mb-2">
-                <h3 className="text-md font-semibold mb-1">New Members This Month</h3>
-                <ul>
-                  {newMembersThisMonth.length === 0 ? (
-                    <li className="text-gray-400">No new members this month.</li>
-                  ) : (
-                    newMembersThisMonth.map(m => (
-                      <li key={m.id} className="flex items-center py-2 border-b last:border-b-0">
-                        <span>{m.first_name} {m.last_name}</span>
-                        <span className="ml-auto text-xs text-gray-500">{new Date(m.created_at).toLocaleDateString()}</span>
-                      </li>
-                    ))
-                  )}
-                </ul>
-              </div>
-              <div>
-                <h3 className="text-md font-semibold mb-1">Upcoming Birthdays</h3>
-                <ul>
-                  {upcomingBirthdays.length === 0 ? (
-                    <li className="text-gray-400">No upcoming birthdays.</li>
-                  ) : (
-                    upcomingBirthdays.map(m => (
-                      <li key={m.id} className="flex items-center py-2 border-b last:border-b-0">
-                        <span>{m.first_name} {m.last_name}</span>
-                        <span className="ml-auto text-xs text-gray-500">{new Date(m.birthday).toLocaleDateString()}</span>
-                      </li>
-                    ))
-                  )}
-                </ul>
-              </div>
-            </div>
-            {/* Engagement Overview (Retention Rate + Most Active Churches merged) */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold mb-4">Engagement Overview</h2>
-              <div className="mb-4">
-                <div className="text-3xl font-bold text-blue-600 mb-2">{retentionRate}%</div>
-                <div className="text-gray-500 mb-2">Member Retention Rate (Members with contributions &gt; 0)</div>
-              </div>
-              <div>
-                <h3 className="text-md font-semibold mb-2">Most Active Churches</h3>
-                <ul>
-                  {mostActiveChurches.map(d => (
-                    <li key={d.name} className="flex justify-between py-2 border-b last:border-b-0">
-                      <span>{d.name}</span>
-                      <span className="font-bold">{d.total}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-            {/* ...existing code... */}
-            {/* Members by Church & Map (now only Map) */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold mb-4">Member Map (by Church)</h2>
-              <ul>
-                {churchCounts.map(d => (
-                  <li key={d.name} className="flex justify-between py-2 border-b last:border-b-0">
-                    <span>{d.name}</span>
-                    <span className="font-bold">{d.count || 0}</span>
-                  </li>
                 ))}
-              </ul>
-              <div className="text-xs text-gray-500 mt-2">(Map visualization coming soon)</div>
+              </div>
             </div>
-            {/* Updates & Announcements (Notifications + Admin Notes merged) */}
+
             <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold mb-4">Updates & Announcements</h2>
-              <div className="mb-2">
-                <h3 className="text-md font-semibold mb-1">Notifications</h3>
-                <ul>
-                  {notifications.map(n => (
-                    <li key={n.id} className="flex justify-between py-2 border-b last:border-b-0">
-                      <span>{n.message}</span>
-                      <span className="text-xs text-gray-500">{n.date}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div>
-                <h3 className="text-md font-semibold mb-1">Admin Notes & Announcements</h3>
-                <ul>
-                  {adminNotes.map(n => (
-                    <li key={n.id} className="flex justify-between py-2 border-b last:border-b-0">
-                      <span>{n.note}</span>
-                      <span className="text-xs text-gray-500">{n.date}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+              <h2 className="text-lg font-semibold mb-4">Member Growth Trend</h2>
+              <Bar data={memberGrowthChartData} options={{
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { 
+                  x: { title: { display: true, text: 'Month' } }, 
+                  y: { title: { display: true, text: 'New Members' }, beginAtZero: true } 
+                }
+              }} />
             </div>
-            {/* ...existing code... */}
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+
+          {/* Demographics */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
             <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold mb-4">Member Growth Over Time</h2>
-              <div className="mb-4">
-                <Bar data={memberGrowthChartData} options={{
+              <h2 className="text-lg font-semibold mb-4">Gender Split</h2>
+              <div className="flex justify-center mb-4">
+                <div style={{ maxWidth: 180, width: '100%' }}>
+                  <Doughnut 
+                    data={genderRatioChartData} 
+                    options={{ 
+                      plugins: { 
+                        legend: { display: false },
+                        datalabels: {
+                          color: 'white',
+                          font: { weight: 'bold' },
+                          formatter: (value) => value
+                        }
+                      } 
+                    }} 
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4 text-center">
+                <div>
+                  <div className="w-3 h-3 bg-blue-500 rounded-full mx-auto mb-1"></div>
+                  <div className="text-lg font-bold">{maleCount}</div>
+                  <div className="text-sm text-gray-600">Male</div>
+                </div>
+                <div>
+                  <div className="w-3 h-3 bg-orange-500 rounded-full mx-auto mb-1"></div>
+                  <div className="text-lg font-bold">{femaleCount}</div>
+                  <div className="text-sm text-gray-600">Female</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-lg font-semibold mb-4">Age Groups</h2>
+              <div className="h-48">
+                <Bar data={ageDistributionChartData} options={{
                   responsive: true,
+                  maintainAspectRatio: false,
                   plugins: { legend: { display: false } },
-                  scales: { x: { title: { display: true, text: 'Month' } }, y: { title: { display: true, text: 'New Members' }, beginAtZero: true } }
+                  scales: { 
+                    x: { title: { display: true, text: 'Age Group' } }, 
+                    y: { title: { display: true, text: 'Members' }, beginAtZero: true } 
+                  }
                 }} />
               </div>
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-sm">
-                  <thead>
-                    <tr>
-                      <th className="text-left py-2 px-2">Month</th>
-                      <th className="text-left py-2 px-2">New Members</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {growthData.length === 0 ? (
-                      <tr><td colSpan={2} className="py-2 px-2 text-gray-400">No data yet</td></tr>
-                    ) : (
-                      growthData.map(([month, count]) => (
-                        <tr key={month}>
-                          <td className="py-1 px-2">{month}</td>
-                          <td className="py-1 px-2 font-bold">{count}</td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
             </div>
+
             <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold mb-4">Top Contributors</h2>
-              <ul>
-                {topContributors.length === 0 ? (
-                  <li className="text-gray-400">No contributor data available.</li>
-                ) : (
-                  topContributors.map(m => (
-                    <li key={m.id} className="flex items-center py-2 border-b last:border-b-0">
-                      <img src={m.image_url || '/default-avatar.png'} alt="avatar" className="w-8 h-8 rounded-full mr-3" />
-                      <span>{m.first_name} {m.last_name}</span>
-                      <span className="ml-auto font-bold">{m.contributions}</span>
-                    </li>
-                  ))
+              <h2 className="text-lg font-semibold mb-4">Recent Activity</h2>
+              <div className="space-y-3">
+                {newMembersThisMonth.slice(0, 4).map(m => (
+                  <div key={m.id} className="flex items-center space-x-3">
+                    {m.image_url ? (
+                      <img src={m.image_url} alt="avatar" className="w-8 h-8 rounded-full" />
+                    ) : (
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold ${
+                        m.gender === 'Male' ? 'bg-blue-500' : 'bg-pink-500'
+                      }`}>
+                        {m.first_name[0]}
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{m.first_name} {m.last_name}</p>
+                      <p className="text-xs text-gray-500">{new Date(m.created_at).toLocaleDateString()}</p>
+                    </div>
+                  </div>
+                ))}
+                {newMembersThisMonth.length === 0 && (
+                  <p className="text-sm text-gray-500 text-center py-4">No recent activity</p>
                 )}
-              </ul>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            {/* Recent Activity & Logins (merged) */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold mb-4">Recent Activity & Logins</h2>
-              <div className="mb-2">
-                <h3 className="text-md font-semibold mb-1">Recent Activity</h3>
-                <ul>
-                  {recentActivity.length === 0 ? (
-                    <li className="text-gray-400">No recent activity yet.</li>
-                  ) : (
-                    recentActivity.map(m => (
-                      <li key={m.id} className="flex items-center py-2 border-b last:border-b-0">
-                        <img src={m.image_url || '/default-avatar.png'} alt="avatar" className="w-8 h-8 rounded-full mr-3" />
-                        <span>{m.first_name} {m.last_name}</span>
-                        <span className="ml-auto text-xs text-gray-500">{new Date(m.created_at).toLocaleDateString()}</span>
-                      </li>
-                    ))
-                  )}
-                </ul>
-              </div>
-              <div>
-                <h3 className="text-md font-semibold mb-1">Recent Logins</h3>
-                <ul>
-                  {recentLogins.map(l => (
-                    <li key={l.id} className="flex justify-between py-2 border-b last:border-b-0">
-                      <span>{l.name}</span>
-                      <span className="text-xs text-gray-500">{l.date}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-            {/* Filter Members + Tags (merged) */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold mb-4">Filter Members & Tags</h2>
-              <div className="mb-4 flex gap-2">
-                <select value={filterChurch} onChange={e => setFilterChurch(e.target.value)} className="border rounded px-2 py-1">
-                  <option value="All">All Churches</option>
-                  {CHURCHES.map(d => <option key={d} value={d}>{d}</option>)}
-                </select>
-                <select value={filterGender} onChange={e => setFilterGender(e.target.value)} className="border rounded px-2 py-1">
-                  <option value="All">All Genders</option>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                </select>
-              </div>
-              <div className="mb-4">
-                <h3 className="text-md font-semibold mb-1">Member Tags / Groups</h3>
-                <ul className="flex flex-wrap gap-2">
-                  {memberTags.map(t => (
-                    <li key={t.id} className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm">{t.tag}</li>
-                  ))}
-                </ul>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-sm">
-                  <thead>
-                    <tr>
-                      <th className="text-left py-2 px-2">Name</th>
-                      <th className="text-left py-2 px-2">Church</th>
-                      <th className="text-left py-2 px-2">Gender</th>
-                      <th className="text-left py-2 px-2">Email</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredMembers.length === 0 ? (
-                      <tr><td colSpan={4} className="py-2 px-2 text-gray-400">No members yet</td></tr>
-                    ) : (
-                      filteredMembers.map(m => (
-                        <tr key={m.id}>
-                          <td className="py-1 px-2">{m.first_name} {m.last_name}</td>
-                          <td className="py-1 px-2">{m.church}</td>
-                          <td className="py-1 px-2">{m.gender}</td>
-                          <td className="py-1 px-2">{m.email}</td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-lg shadow p-6 mt-8">
-            <h2 className="text-lg font-semibold mb-4">Export Member Data</h2>
-            <button
-              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-              onClick={() => {
-                const csv = [
-                  ['Name', 'Church', 'Gender', 'Email'],
-                  ...members.map(m => [m.first_name + ' ' + m.last_name, m.church, m.gender, m.email])
-                ].map(row => row.join(',')).join('\n');
-                const blob = new Blob([csv], { type: 'text/csv' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'members.csv';
-                a.click();
-                URL.revokeObjectURL(url);
-              }}
-            >
-              Export CSV
-            </button>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6 mt-8">
-            <h2 className="text-lg font-semibold mb-4">More Dashboard Suggestions</h2>
-            <ul className="list-disc ml-6">
-              <li>Show member age distribution (add a chart)</li>
-              <li>Display upcoming birthdays or anniversaries</li>
-              <li>Highlight new members this month</li>
-              <li>Show member retention rate</li>
-              <li>Display most active churches</li>
-              <li>Show average contributions per member</li>
-              <li>Integrate notifications for important updates</li>
-              <li>Allow admins to add notes or announcements</li>
-              <li>Show a leaderboard for member engagement</li>
-              <li>Display a map of member locations</li>
-              <li>Show recent logins or activity timestamps</li>
-              <li>Enable custom member tags or groups</li>
-              <li>Show gender ratio as a chart</li>
-              <li>Display member contact statistics</li>
-              <li>Integrate with external data sources (e.g., Google Sheets)</li>
-            </ul>
+
+          {/* Quick Actions */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>
+            <div className="flex flex-wrap gap-3">
+              <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition duration-200">
+                Add Member
+              </button>
+              <button 
+                className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition duration-200"
+                onClick={() => {
+                  const csv = [
+                    ['Name', 'Church', 'Gender', 'Email', 'Contributions'],
+                    ...members.map(m => [
+                      `${m.first_name} ${m.last_name}`, 
+                      m.church, 
+                      m.gender, 
+                      m.email, 
+                      m.contributions || 0
+                    ])
+                  ].map(row => row.join(',')).join('\n');
+                  const blob = new Blob([csv], { type: 'text/csv' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = 'member-report.csv';
+                  a.click();
+                  URL.revokeObjectURL(url);
+                }}
+              >
+                Export Report
+              </button>
+              <button className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg transition duration-200">
+                Send Notifications
+              </button>
+              <button className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg transition duration-200">
+                Schedule Event
+              </button>
+            </div>
           </div>
         </>
       )}
