@@ -1,26 +1,31 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { sampleMembers, CHURCHES } from '../pages/Dashboard';
 
+/**
+ * Members Component
+ * Comprehensive member management interface with responsive design
+ * Features: search, filter, sort, pagination, CRUD operations
+ */
 const Members = () => {
   // Transform the sample members data to match expected format
-  const transformedMembers = sampleMembers.map(member => ({
-    id: member.id,
-    name: `${member.first_name} ${member.last_name}`,
-    email: member.email,
-    phone: `+66-${Math.floor(Math.random() * 900000000) + 100000000}`,
-    church: member.church,
-    status: 'Active',
-    joinDate: member.created_at,
-    ministry: '',
-    address: '',
-    emergencyContact: '',
-    notes: '',
-    avatar: member.image_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.first_name + ' ' + member.last_name)}&background=3b82f6&color=ffffff&size=128`
-  }));
+  const transformedMembers = useMemo(() => 
+    sampleMembers.map(member => ({
+      id: member.id,
+      name: `${member.first_name} ${member.last_name}`,
+      email: member.email,
+      phone: `+66-${Math.floor(Math.random() * 900000000) + 100000000}`,
+      church: member.church,
+      status: 'Active',
+      joinDate: member.created_at,
+      ministry: '',
+      address: '',
+      emergencyContact: '',
+      notes: '',
+      avatar: member.image_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.first_name + ' ' + member.last_name)}&background=3b82f6&color=ffffff&size=128`
+    })), []);
 
+  // State management
   const [members, setMembers] = useState(transformedMembers);
-  
-  console.log('Members component rendering, members count:', members.length);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedChurch, setSelectedChurch] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
@@ -45,7 +50,16 @@ const Members = () => {
 
   const itemsPerPage = 10;
 
-  // Filtered and sorted members
+  // Status configuration
+  const statusConfig = {
+    Active: { bg: 'bg-green-100', text: 'text-green-800' },
+    Inactive: { bg: 'bg-red-100', text: 'text-red-800' },
+    Visitor: { bg: 'bg-yellow-100', text: 'text-yellow-800' }
+  };
+
+  /**
+   * Filtered and sorted members with optimized performance
+   */
   const filteredMembers = useMemo(() => {
     let filtered = members.filter(member => {
       const matchesSearch = member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -74,7 +88,9 @@ const Members = () => {
     return filtered;
   }, [members, searchTerm, selectedChurch, selectedStatus, sortBy, sortOrder]);
 
-  // Paginated members
+  /**
+   * Paginated members
+   */
   const paginatedMembers = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     return filteredMembers.slice(startIndex, startIndex + itemsPerPage);
@@ -82,16 +98,22 @@ const Members = () => {
 
   const totalPages = Math.ceil(filteredMembers.length / itemsPerPage);
 
-  const handleSort = (field) => {
+  /**
+   * Handle sorting with optimized state updates
+   */
+  const handleSort = useCallback((field) => {
     if (sortBy === field) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+      setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
     } else {
       setSortBy(field);
       setSortOrder('asc');
     }
-  };
+  }, [sortBy]);
 
-  const handleModalOpen = (type, member = null) => {
+  /**
+   * Handle modal operations
+   */
+  const handleModalOpen = useCallback((type, member = null) => {
     setModalType(type);
     setSelectedMember(member);
     if (type === 'add') {
@@ -111,9 +133,12 @@ const Members = () => {
       setFormData(member);
     }
     setShowModal(true);
-  };
+  }, []);
 
-  const handleFormSubmit = (e) => {
+  /**
+   * Handle form submission
+   */
+  const handleFormSubmit = useCallback((e) => {
     e.preventDefault();
     if (modalType === 'add') {
       const newMember = {
@@ -121,18 +146,38 @@ const Members = () => {
         id: Math.max(...members.map(m => m.id)) + 1,
         avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.name)}&background=3b82f6&color=ffffff&size=128`
       };
-      setMembers([...members, newMember]);
+      setMembers(prev => [...prev, newMember]);
     } else if (modalType === 'edit') {
-      setMembers(members.map(m => m.id === selectedMember.id ? { ...m, ...formData } : m));
+      setMembers(prev => prev.map(m => m.id === selectedMember.id ? { ...m, ...formData } : m));
     }
     setShowModal(false);
-  };
+  }, [modalType, formData, members, selectedMember]);
 
-  const handleDelete = (id) => {
+  /**
+   * Handle member deletion
+   */
+  const handleDelete = useCallback((id) => {
     if (window.confirm('Are you sure you want to delete this member?')) {
-      setMembers(members.filter(m => m.id !== id));
+      setMembers(prev => prev.filter(m => m.id !== id));
     }
-  };
+  }, []);
+
+  /**
+   * Clear all filters
+   */
+  const handleClearFilters = useCallback(() => {
+    setSearchTerm('');
+    setSelectedChurch('');
+    setSelectedStatus('');
+    setCurrentPage(1);
+  }, []);
+
+  /**
+   * Handle image loading error
+   */
+  const handleImageError = useCallback((e, memberName) => {
+    e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(memberName)}&background=3b82f6&color=ffffff&size=128`;
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
@@ -156,58 +201,209 @@ const Members = () => {
           </div>
         </div>
 
-        {/* Filters */}
+        {/* Filters Section - Enhanced Responsive Design */}
         <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6 mb-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Search</label>
-              <input
-                type="text"
-                placeholder="Search by name or email..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-              />
+            {/* Search Input */}
+            <div className="lg:col-span-2">
+              <label 
+                htmlFor="search-input"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Search Members
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg 
+                    className="h-5 w-5 text-gray-400" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round" 
+                      strokeWidth={2} 
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" 
+                    />
+                  </svg>
+                </div>
+                <input
+                  id="search-input"
+                  type="text"
+                  placeholder="Search by name or email..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="
+                    w-full 
+                    pl-10 
+                    pr-3 
+                    py-2.5 
+                    border 
+                    border-gray-300 
+                    rounded-lg 
+                    focus:outline-none 
+                    focus:ring-2 
+                    focus:ring-blue-500 
+                    focus:border-blue-500 
+                    text-sm
+                    transition-colors
+                    duration-200
+                  "
+                  aria-describedby="search-description"
+                />
+              </div>
+              <p id="search-description" className="sr-only">
+                Search members by name or email address
+              </p>
             </div>
+
+            {/* Church Filter */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Church</label>
+              <label 
+                htmlFor="church-filter"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Filter by Church
+              </label>
               <select
+                id="church-filter"
                 value={selectedChurch}
                 onChange={(e) => setSelectedChurch(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                className="
+                  w-full 
+                  px-3 
+                  py-2.5 
+                  border 
+                  border-gray-300 
+                  rounded-lg 
+                  focus:outline-none 
+                  focus:ring-2 
+                  focus:ring-blue-500 
+                  focus:border-blue-500 
+                  text-sm
+                  bg-white
+                  transition-colors
+                  duration-200
+                "
+                aria-describedby="church-description"
               >
                 <option value="">All Churches</option>
                 {CHURCHES.map(church => (
                   <option key={church} value={church}>{church}</option>
                 ))}
               </select>
+              <p id="church-description" className="sr-only">
+                Filter members by their church location
+              </p>
             </div>
+
+            {/* Status Filter */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+              <label 
+                htmlFor="status-filter"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Filter by Status
+              </label>
               <select
+                id="status-filter"
                 value={selectedStatus}
                 onChange={(e) => setSelectedStatus(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                className="
+                  w-full 
+                  px-3 
+                  py-2.5 
+                  border 
+                  border-gray-300 
+                  rounded-lg 
+                  focus:outline-none 
+                  focus:ring-2 
+                  focus:ring-blue-500 
+                  focus:border-blue-500 
+                  text-sm
+                  bg-white
+                  transition-colors
+                  duration-200
+                "
+                aria-describedby="status-description"
               >
                 <option value="">All Status</option>
                 <option value="Active">Active</option>
                 <option value="Inactive">Inactive</option>
                 <option value="Visitor">Visitor</option>
               </select>
+              <p id="status-description" className="sr-only">
+                Filter members by their current status
+              </p>
             </div>
-            <div className="flex items-end">
-              <button
-                onClick={() => {
-                  setSearchTerm('');
-                  setSelectedChurch('');
-                  setSelectedStatus('');
-                  setCurrentPage(1);
-                }}
-                className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors duration-200 min-h-[44px] text-sm"
+          </div>
+
+          {/* Filter Actions */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-6 pt-4 border-t border-gray-200">
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              {(searchTerm || selectedChurch || selectedStatus) && (
+                <>
+                  <span>Active filters:</span>
+                  {searchTerm && (
+                    <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+                      Search: "{searchTerm}"
+                    </span>
+                  )}
+                  {selectedChurch && (
+                    <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">
+                      Church: {selectedChurch}
+                    </span>
+                  )}
+                  {selectedStatus && (
+                    <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-xs">
+                      Status: {selectedStatus}
+                    </span>
+                  )}
+                </>
+              )}
+            </div>
+            
+            <button
+              onClick={handleClearFilters}
+              className="
+                px-4 
+                py-2 
+                bg-gray-100 
+                text-gray-700 
+                rounded-lg 
+                hover:bg-gray-200 
+                focus:outline-none 
+                focus:ring-2 
+                focus:ring-gray-500 
+                focus:ring-offset-2 
+                transition-colors 
+                duration-200 
+                min-h-[40px] 
+                text-sm
+                font-medium
+                self-start
+                sm:self-auto
+              "
+              type="button"
+            >
+              <svg 
+                className="w-4 h-4 inline mr-2" 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+                aria-hidden="true"
               >
-                Clear Filters
-              </button>
-            </div>
+                <path 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  strokeWidth={2} 
+                  d="M6 18L18 6M6 6l12 12" 
+                />
+              </svg>
+              Clear Filters
+            </button>
           </div>
         </div>
 
@@ -242,64 +438,316 @@ const Members = () => {
           </div>
         </div>
 
-        {/* Mobile Card View */}
+        {/* Mobile Card View - Enhanced */}
         <div className="block md:hidden space-y-4 mb-6">
-          {paginatedMembers.map((member) => (
-            <div key={member.id} className="bg-white rounded-xl shadow-sm p-4 border border-gray-200">
-              <div className="flex items-start gap-4">
-                <img
-                  src={member.avatar}
-                  alt={member.name}
-                  className="w-12 h-12 rounded-full object-cover flex-shrink-0"
-                  onError={(e) => {
-                    e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=3b82f6&color=ffffff&size=128`;
-                  }}
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <h3 className="font-semibold text-gray-900 truncate">{member.name}</h3>
-                      <p className="text-sm text-gray-600 truncate">{member.email}</p>
+          {paginatedMembers.length > 0 ? (
+            paginatedMembers.map((member) => (
+              <article 
+                key={member.id} 
+                className="
+                  bg-white 
+                  rounded-xl 
+                  shadow-sm 
+                  p-4 
+                  border 
+                  border-gray-200
+                  hover:shadow-md
+                  transition-shadow
+                  duration-200
+                "
+              >
+                <div className="flex items-start gap-4">
+                  <div className="flex-shrink-0">
+                    <img
+                      src={member.avatar}
+                      alt={`${member.name} avatar`}
+                      className="w-12 h-12 rounded-full object-cover ring-2 ring-gray-100"
+                      onError={(e) => handleImageError(e, member.name)}
+                      loading="lazy"
+                    />
+                  </div>
+                  
+                  <div className="flex-1 min-w-0">
+                    {/* Header with name and status */}
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-semibold text-gray-900 truncate text-lg">
+                          {member.name}
+                        </h3>
+                        <p className="text-sm text-gray-600 truncate mt-0.5">
+                          {member.email}
+                        </p>
+                      </div>
+                      <span 
+                        className={`
+                          px-2.5 
+                          py-1 
+                          rounded-full 
+                          text-xs 
+                          font-medium 
+                          flex-shrink-0 
+                          ml-3
+                          ${statusConfig[member.status]?.bg || 'bg-gray-100'} 
+                          ${statusConfig[member.status]?.text || 'text-gray-800'}
+                        `}
+                        aria-label={`Member status: ${member.status}`}
+                      >
+                        {member.status}
+                      </span>
                     </div>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium flex-shrink-0 ${
-                      member.status === 'Active' ? 'bg-green-100 text-green-800' :
-                      member.status === 'Inactive' ? 'bg-red-100 text-red-800' :
-                      'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {member.status}
-                    </span>
-                  </div>
-                  <div className="text-sm text-gray-600 space-y-1 mb-3">
-                    <p><span className="font-medium">Church:</span> {member.church}</p>
-                    <p><span className="font-medium">Phone:</span> {member.phone}</p>
-                    <p><span className="font-medium">Joined:</span> {new Date(member.joinDate).toLocaleDateString()}</p>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleModalOpen('view', member)}
-                      className="flex-1 px-3 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200 text-sm font-medium min-h-[40px]"
-                    >
-                      View
-                    </button>
-                    <button
-                      onClick={() => handleModalOpen('edit', member)}
-                      className="flex-1 px-3 py-2 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors duration-200 text-sm font-medium min-h-[40px]"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(member.id)}
-                      className="px-3 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors duration-200 min-h-[40px] min-w-[40px] flex items-center justify-center"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
+                    
+                    {/* Member details */}
+                    <div className="space-y-2 text-sm text-gray-600 mb-4">
+                      <div className="flex items-center gap-2">
+                        <svg 
+                          className="w-4 h-4 text-gray-400 flex-shrink-0" 
+                          fill="none" 
+                          stroke="currentColor" 
+                          viewBox="0 0 24 24"
+                          aria-hidden="true"
+                        >
+                          <path 
+                            strokeLinecap="round" 
+                            strokeLinejoin="round" 
+                            strokeWidth={2} 
+                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0v2a2 2 0 01-2 2H7a2 2 0 01-2-2v-2m14 0V9a2 2 0 00-2-2H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2z" 
+                          />
+                        </svg>
+                        <span className="font-medium min-w-0">Church:</span>
+                        <span className="truncate">{member.church}</span>
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        <svg 
+                          className="w-4 h-4 text-gray-400 flex-shrink-0" 
+                          fill="none" 
+                          stroke="currentColor" 
+                          viewBox="0 0 24 24"
+                          aria-hidden="true"
+                        >
+                          <path 
+                            strokeLinecap="round" 
+                            strokeLinejoin="round" 
+                            strokeWidth={2} 
+                            d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" 
+                          />
+                        </svg>
+                        <span className="font-medium min-w-0">Phone:</span>
+                        <span className="truncate">{member.phone}</span>
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        <svg 
+                          className="w-4 h-4 text-gray-400 flex-shrink-0" 
+                          fill="none" 
+                          stroke="currentColor" 
+                          viewBox="0 0 24 24"
+                          aria-hidden="true"
+                        >
+                          <path 
+                            strokeLinecap="round" 
+                            strokeLinejoin="round" 
+                            strokeWidth={2} 
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" 
+                          />
+                        </svg>
+                        <span className="font-medium min-w-0">Joined:</span>
+                        <span className="truncate">
+                          {new Date(member.joinDate).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    {/* Action buttons */}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleModalOpen('view', member)}
+                        className="
+                          flex-1 
+                          px-3 
+                          py-2.5 
+                          bg-blue-50 
+                          text-blue-600 
+                          rounded-lg 
+                          hover:bg-blue-100 
+                          focus:outline-none 
+                          focus:ring-2 
+                          focus:ring-blue-500 
+                          focus:ring-offset-2
+                          transition-colors 
+                          duration-200 
+                          text-sm 
+                          font-medium 
+                          min-h-[42px]
+                          flex
+                          items-center
+                          justify-center
+                          gap-2
+                        "
+                        aria-label={`View ${member.name}'s profile`}
+                      >
+                        <svg 
+                          className="w-4 h-4" 
+                          fill="none" 
+                          stroke="currentColor" 
+                          viewBox="0 0 24 24"
+                          aria-hidden="true"
+                        >
+                          <path 
+                            strokeLinecap="round" 
+                            strokeLinejoin="round" 
+                            strokeWidth={2} 
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" 
+                          />
+                          <path 
+                            strokeLinecap="round" 
+                            strokeLinejoin="round" 
+                            strokeWidth={2} 
+                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" 
+                          />
+                        </svg>
+                        View
+                      </button>
+                      
+                      <button
+                        onClick={() => handleModalOpen('edit', member)}
+                        className="
+                          flex-1 
+                          px-3 
+                          py-2.5 
+                          bg-gray-50 
+                          text-gray-600 
+                          rounded-lg 
+                          hover:bg-gray-100 
+                          focus:outline-none 
+                          focus:ring-2 
+                          focus:ring-gray-500 
+                          focus:ring-offset-2
+                          transition-colors 
+                          duration-200 
+                          text-sm 
+                          font-medium 
+                          min-h-[42px]
+                          flex
+                          items-center
+                          justify-center
+                          gap-2
+                        "
+                        aria-label={`Edit ${member.name}'s information`}
+                      >
+                        <svg 
+                          className="w-4 h-4" 
+                          fill="none" 
+                          stroke="currentColor" 
+                          viewBox="0 0 24 24"
+                          aria-hidden="true"
+                        >
+                          <path 
+                            strokeLinecap="round" 
+                            strokeLinejoin="round" 
+                            strokeWidth={2} 
+                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" 
+                          />
+                        </svg>
+                        Edit
+                      </button>
+                      
+                      <button
+                        onClick={() => handleDelete(member.id)}
+                        className="
+                          px-3 
+                          py-2.5 
+                          bg-red-50 
+                          text-red-600 
+                          rounded-lg 
+                          hover:bg-red-100 
+                          focus:outline-none 
+                          focus:ring-2 
+                          focus:ring-red-500 
+                          focus:ring-offset-2
+                          transition-colors 
+                          duration-200 
+                          min-h-[42px] 
+                          min-w-[42px] 
+                          flex 
+                          items-center 
+                          justify-center
+                        "
+                        aria-label={`Delete ${member.name}`}
+                      >
+                        <svg 
+                          className="w-4 h-4" 
+                          fill="none" 
+                          stroke="currentColor" 
+                          viewBox="0 0 24 24"
+                          aria-hidden="true"
+                        >
+                          <path 
+                            strokeLinecap="round" 
+                            strokeLinejoin="round" 
+                            strokeWidth={2} 
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" 
+                          />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </article>
+            ))
+          ) : (
+            <div className="bg-white rounded-xl shadow-sm p-8 text-center">
+              <svg 
+                className="mx-auto h-12 w-12 text-gray-400 mb-4" 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  strokeWidth={2} 
+                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" 
+                />
+              </svg>
+              <h3 className="text-sm font-medium text-gray-900 mb-1">No members found</h3>
+              <p className="text-sm text-gray-500">
+                {searchTerm || selectedChurch || selectedStatus
+                  ? 'Try adjusting your filters to see more results.'
+                  : 'Get started by adding your first member.'}
+              </p>
+              {!searchTerm && !selectedChurch && !selectedStatus && (
+                <button
+                  onClick={() => handleModalOpen('add')}
+                  className="
+                    mt-4 
+                    inline-flex 
+                    items-center 
+                    px-4 
+                    py-2 
+                    bg-blue-600 
+                    text-white 
+                    rounded-lg 
+                    hover:bg-blue-700 
+                    focus:outline-none 
+                    focus:ring-2 
+                    focus:ring-blue-500 
+                    focus:ring-offset-2 
+                    transition-colors 
+                    duration-200 
+                    text-sm 
+                    font-medium
+                  "
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Add First Member
+                </button>
+              )}
             </div>
-          ))}
+          )}
         </div>
 
         {/* Desktop Table View */}
