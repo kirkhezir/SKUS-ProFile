@@ -1,584 +1,670 @@
 import React, { useState, useMemo } from 'react';
-import { CHURCHES, sampleMembers } from './Dashboard';
+import { sampleMembers, CHURCHES } from '../pages/Dashboard';
 
-// Add custom scrollbar styles
-const customScrollbarStyles = `
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
-  }
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 3px;
-  }
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
-    border-radius: 3px;
-  }
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #a1a1a1;
-  }
-`;
+const Members = () => {
+  // Transform the sample members data to match expected format
+  const transformedMembers = sampleMembers.map(member => ({
+    id: member.id,
+    name: `${member.first_name} ${member.last_name}`,
+    email: member.email,
+    phone: `+66-${Math.floor(Math.random() * 900000000) + 100000000}`,
+    church: member.church,
+    status: 'Active',
+    joinDate: member.created_at,
+    ministry: '',
+    address: '',
+    emergencyContact: '',
+    notes: '',
+    avatar: member.image_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.first_name + ' ' + member.last_name)}&background=3b82f6&color=ffffff&size=128`
+  }));
 
-// Add styles to head
-if (typeof document !== 'undefined') {
-  const style = document.createElement('style');
-  style.textContent = customScrollbarStyles;
-  document.head.appendChild(style);
-}
-
-const TAGS = ['Committee', 'Volunteer', 'Alumni'];
-
-function exportCSV(members) {
-  const csv = [
-    ['Name', 'Church', 'Gender', 'Email', 'Tags'],
-    ...members.map(m => [
-      m.first_name + ' ' + m.last_name,
-      m.district,
-      m.gender,
-      m.email,
-      (m.tags || []).join('; ')
-    ])
-  ].map(row => row.join(',')).join('\n');
-  const blob = new Blob([csv], { type: 'text/csv' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'members.csv';
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-export default function Members() {
-  const [members, setMembers] = useState(sampleMembers.map(m => ({ ...m, tags: [] })));
-  const [search, setSearch] = useState('');
-  const [filterChurch, setFilterChurch] = useState('All');
-  const [filterGender, setFilterGender] = useState('All');
-  const [filterTag, setFilterTag] = useState('All');
-  const [selected, setSelected] = useState([]);
-  const [showProfile, setShowProfile] = useState(null);
-  const [showAdd, setShowAdd] = useState(false);
-  const [showEdit, setShowEdit] = useState(null);
-  const [newMember, setNewMember] = useState({ first_name: '', last_name: '', email: '', gender: 'Male', church: CHURCHES[0], tags: [] });
+  const [members, setMembers] = useState(transformedMembers);
+  
+  console.log('Members component rendering, members count:', members.length);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedChurch, setSelectedChurch] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState('');
+  const [sortBy, setSortBy] = useState('name');
+  const [sortOrder, setSortOrder] = useState('asc');
   const [currentPage, setCurrentPage] = useState(1);
-  const [sortField, setSortField] = useState('');
-  const [sortDirection, setSortDirection] = useState('asc');
-  const pageSize = 10;
+  const [showModal, setShowModal] = useState(false);
+  const [modalType, setModalType] = useState('view'); // 'view', 'edit', 'add'
+  const [selectedMember, setSelectedMember] = useState(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    church: '',
+    status: 'Active',
+    joinDate: '',
+    ministry: '',
+    address: '',
+    emergencyContact: '',
+    notes: ''
+  });
 
-  // Filtered and searched members
+  const itemsPerPage = 10;
+
+  // Filtered and sorted members
   const filteredMembers = useMemo(() => {
-    let filtered = members.filter(m =>
-      (filterChurch === 'All' || m.church === filterChurch) &&
-      (filterGender === 'All' || m.gender === filterGender) &&
-      (filterTag === 'All' || (m.tags || []).includes(filterTag)) &&
-      (`${m.first_name} ${m.last_name}`.toLowerCase().includes(search.toLowerCase()) || m.email.toLowerCase().includes(search.toLowerCase()))
-    );
+    let filtered = members.filter(member => {
+      const matchesSearch = member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           member.email.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesChurch = !selectedChurch || member.church === selectedChurch;
+      const matchesStatus = !selectedStatus || member.status === selectedStatus;
+      
+      return matchesSearch && matchesChurch && matchesStatus;
+    });
 
-    // Apply sorting
-    if (sortField) {
-      filtered.sort((a, b) => {
-        let aValue, bValue;
-        
-        switch (sortField) {
-          case 'name':
-            aValue = `${a.first_name} ${a.last_name}`.toLowerCase();
-            bValue = `${b.first_name} ${b.last_name}`.toLowerCase();
-            break;
-          case 'church':
-            aValue = a.church.toLowerCase();
-            bValue = b.church.toLowerCase();
-            break;
-          case 'gender':
-            aValue = a.gender.toLowerCase();
-            bValue = b.gender.toLowerCase();
-            break;
-          case 'email':
-            aValue = a.email.toLowerCase();
-            bValue = b.email.toLowerCase();
-            break;
-          case 'tags':
-            aValue = (a.tags || []).join(', ').toLowerCase();
-            bValue = (b.tags || []).join(', ').toLowerCase();
-            break;
-          default:
-            return 0;
-        }
-
-        if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
-        if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
-        return 0;
-      });
-    }
+    // Sort members
+    filtered.sort((a, b) => {
+      let aValue = a[sortBy];
+      let bValue = b[sortBy];
+      
+      if (sortBy === 'joinDate') {
+        aValue = new Date(aValue);
+        bValue = new Date(bValue);
+      }
+      
+      if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
 
     return filtered;
-  }, [members, filterChurch, filterGender, filterTag, search, sortField, sortDirection]);
+  }, [members, searchTerm, selectedChurch, selectedStatus, sortBy, sortOrder]);
 
-  // Pagination
-  const totalPages = Math.ceil(filteredMembers.length / pageSize);
-  const pagedMembers = filteredMembers.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  // Paginated members
+  const paginatedMembers = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredMembers.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredMembers, currentPage, itemsPerPage]);
 
-  // Bulk select
-  const toggleSelect = id => {
-    setSelected(selected.includes(id) ? selected.filter(s => s !== id) : [...selected, id]);
-  };
-  const selectAll = () => {
-    setSelected(pagedMembers.map(m => m.id));
-  };
-  const clearSelected = () => setSelected([]);
+  const totalPages = Math.ceil(filteredMembers.length / itemsPerPage);
 
-  // Add member
-  const handleAdd = () => {
-    setMembers([...members, { ...newMember, id: members.length + 1 }]);
-    setShowAdd(false);
-    setNewMember({ first_name: '', last_name: '', email: '', gender: 'Male', church: CHURCHES[0], tags: [] });
-  };
-
-  // Edit member (UI only)
-  const handleEdit = (id, updated) => {
-    setMembers(members.map(m => m.id === id ? { ...m, ...updated } : m));
-    setShowProfile(null);
-  };
-
-  // Delete member
-  const handleDelete = id => {
-    setMembers(members.filter(m => m.id !== id));
-    setShowProfile(null);
-  };
-  const handleBulkDelete = () => {
-    setMembers(members.filter(m => !selected.includes(m.id)));
-    clearSelected();
-  };
-
-  // Tag assignment
-  const assignTag = (id, tag) => {
-    setMembers(members.map(m => m.id === id ? { ...m, tags: [...(m.tags || []), tag] } : m));
-  };
-  const removeTag = (id, tag) => {
-    setMembers(members.map(m => m.id === id ? { ...m, tags: (m.tags || []).filter(t => t !== tag) } : m));
-  };
-
-  // Sorting function
   const handleSort = (field) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    if (sortBy === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
     } else {
-      setSortField(field);
-      setSortDirection('asc');
+      setSortBy(field);
+      setSortOrder('asc');
     }
   };
 
-  // Sort indicator component
-  const SortIcon = ({ field }) => {
-    if (sortField !== field) {
-      return (
-        <svg className="w-4 h-4 ml-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-        </svg>
-      );
+  const handleModalOpen = (type, member = null) => {
+    setModalType(type);
+    setSelectedMember(member);
+    if (type === 'add') {
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        church: '',
+        status: 'Active',
+        joinDate: '',
+        ministry: '',
+        address: '',
+        emergencyContact: '',
+        notes: ''
+      });
+    } else if (type === 'edit' && member) {
+      setFormData(member);
     }
-    return sortDirection === 'asc' ? (
-      <svg className="w-4 h-4 ml-1 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-      </svg>
-    ) : (
-      <svg className="w-4 h-4 ml-1 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-      </svg>
-    );
+    setShowModal(true);
+  };
+
+  const handleFormSubmit = (e) => {
+    e.preventDefault();
+    if (modalType === 'add') {
+      const newMember = {
+        ...formData,
+        id: Math.max(...members.map(m => m.id)) + 1,
+        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.name)}&background=3b82f6&color=ffffff&size=128`
+      };
+      setMembers([...members, newMember]);
+    } else if (modalType === 'edit') {
+      setMembers(members.map(m => m.id === selectedMember.id ? { ...m, ...formData } : m));
+    }
+    setShowModal(false);
+  };
+
+  const handleDelete = (id) => {
+    if (window.confirm('Are you sure you want to delete this member?')) {
+      setMembers(members.filter(m => m.id !== id));
+    }
   };
 
   return (
-    <div className="p-8">
-      <h1 className="text-3xl font-bold mb-8 text-gray-900">Members</h1>
-      <div className="mb-6 flex flex-wrap gap-3 items-center bg-white p-4 rounded-lg shadow border border-gray-200">
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name or email" className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400" />
-        <select value={filterChurch} onChange={e => setFilterChurch(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2">
-          <option value="All">All Churches</option>
-          {CHURCHES.map(d => <option key={d} value={d}>{d}</option>)}
-        </select>
-        <select value={filterGender} onChange={e => setFilterGender(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2">
-          <option value="All">All Genders</option>
-          <option value="Male">Male</option>
-          <option value="Female">Female</option>
-        </select>
-        <select value={filterTag} onChange={e => setFilterTag(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2">
-          <option value="All">All Tags</option>
-          {TAGS.map(t => <option key={t} value={t}>{t}</option>)}
-        </select>
-        <button className="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition" onClick={() => setShowAdd(true)}>Add Member</button>
-        <button className="bg-green-500 text-white px-4 py-2 rounded-lg shadow hover:bg-green-600 transition" onClick={() => exportCSV(filteredMembers)}>Export CSV</button>
-        <button className={`bg-red-500 text-white px-4 py-2 rounded-lg shadow hover:bg-red-600 transition ${selected.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`} onClick={handleBulkDelete} disabled={selected.length === 0}>Delete Selected</button>
-      </div>
-      <div className="overflow-x-auto rounded-lg shadow border border-gray-200 bg-white">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50 sticky top-0 z-10">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                <div className="flex items-center">
-                  <input 
-                    type="checkbox" 
-                    checked={pagedMembers.length > 0 && selected.length === pagedMembers.length && pagedMembers.every(m => selected.includes(m.id))} 
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        selectAll();
-                      } else {
-                        clearSelected();
-                      }
-                    }}
-                    className="form-checkbox h-4 w-4 text-blue-600" 
-                  />
-                  <span className="ml-2">Select</span>
-                </div>
-              </th>
-              <th 
-                className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
-                onClick={() => handleSort('name')}
-              >
-                <div className="flex items-center">
-                  Name
-                  <SortIcon field="name" />
-                </div>
-              </th>
-              <th 
-                className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
-                onClick={() => handleSort('church')}
-              >
-                <div className="flex items-center">
-                  Church
-                  <SortIcon field="church" />
-                </div>
-              </th>
-              <th 
-                className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
-                onClick={() => handleSort('gender')}
-              >
-                <div className="flex items-center">
-                  Gender
-                  <SortIcon field="gender" />
-                </div>
-              </th>
-              <th 
-                className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
-                onClick={() => handleSort('email')}
-              >
-                <div className="flex items-center">
-                  Email
-                  <SortIcon field="email" />
-                </div>
-              </th>
-              <th 
-                className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
-                onClick={() => handleSort('tags')}
-              >
-                <div className="flex items-center">
-                  Tags
-                  <SortIcon field="tags" />
-                </div>
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-100">
-            {pagedMembers.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="py-6 px-6 text-center text-gray-400">No members found</td>
-              </tr>
-            ) : (
-              pagedMembers.map(m => (
-                <tr key={m.id} className={`hover:bg-blue-50 transition ${selected.includes(m.id) ? 'bg-blue-100' : ''}`}>
-                  <td className="px-6 py-4">
-                    <input type="checkbox" checked={selected.includes(m.id)} onChange={() => toggleSelect(m.id)} className="form-checkbox h-4 w-4 text-blue-600" />
-                  </td>
-                  <td className="px-6 py-4 font-semibold text-gray-900">
-                    <div className="flex items-center">
-                      {m.image_url ? (
-                        <img src={m.image_url} alt="avatar" className="w-10 h-10 rounded-full border border-gray-300 shadow-sm mr-3" />
-                      ) : (
-                        <div className={`w-10 h-10 rounded-full border border-gray-300 shadow-sm mr-3 flex items-center justify-center text-white font-semibold ${m.gender === 'Male' ? 'bg-blue-500' : 'bg-pink-500'}`}>
-                          {m.gender === 'Male' ? (
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" className="w-6 h-6">
-                              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                            </svg>
-                          ) : (
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" className="w-6 h-6">
-                              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                            </svg>
-                          )}
-                        </div>
-                      )}
-                      <span>{m.first_name} {m.last_name}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="inline-block bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-medium">{m.church}</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${m.gender === 'Male' ? 'bg-blue-200 text-blue-800' : 'bg-orange-100 text-orange-800'}`}>{m.gender}</span>
-                  </td>
-                  <td className="px-6 py-4 text-gray-700">{m.email}</td>
-                  <td className="px-6 py-4">
-                    {(m.tags || []).length > 0 ? (
-                      <div className="flex flex-wrap gap-1">
-                        {m.tags.map(tag => (
-                          <span key={tag} className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-xs">{tag}</span>
-                        ))}
-                      </div>
-                    ) : (
-                      <span className="text-gray-400 text-xs">-</span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4">
-                    {/* View Icon */}
-                    <button title="View" className="p-1 mr-2" style={{ color: '#2563eb', background: '#eff6ff', borderRadius: '6px' }} onClick={() => setShowProfile(m)}>
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                    </button>
-                    {/* Edit Icon */}
-                    <button title="Edit" className="p-1 mr-2" style={{ color: '#059669', background: '#ecfdf5', borderRadius: '6px' }} onClick={() => setShowEdit(m)}>
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 20h9" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16.5 3.5a2.121 2.121 0 113 3L7 19l-4 1 1-4 12.5-12.5z" /></svg>
-                    </button>
-                    {/* Delete Icon (Trash) */}
-                    <button title="Delete" className="p-1" style={{ color: '#dc2626', background: '#fef2f2', borderRadius: '6px' }} onClick={() => handleDelete(m.id)}>
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3m-7 0h10" /></svg>
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-      {/* Pagination */}
-      <div className="flex gap-2 mt-4">
-        <button onClick={() => setCurrentPage(1)} disabled={currentPage === 1}>First</button>
-        <button onClick={() => setCurrentPage(currentPage - 1)} disabled={currentPage === 1}>Prev</button>
-        <span>Page {currentPage} of {totalPages}</span>
-        <button onClick={() => setCurrentPage(currentPage + 1)} disabled={currentPage === totalPages}>Next</button>
-        <button onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages}>Last</button>
-      </div>
-      {/* Member Profile Modal */}
-      {showProfile && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded shadow-lg w-full max-w-md">
-            <h2 className="text-xl font-bold mb-2">Member Profile</h2>
-            <div className="mb-2">Name: {showProfile.first_name} {showProfile.last_name}</div>
-            <div className="mb-2">Email: {showProfile.email}</div>
-            <div className="mb-2">Church: {showProfile.church}</div>
-            <div className="mb-2">Gender: {showProfile.gender}</div>
-            <div className="mb-2">Tags: {(showProfile.tags || []).join(', ')}</div>
-            <div className="mb-2">Contributions: {showProfile.contributions || 0}</div>
-            <div className="mb-2">Joined: {showProfile.created_at}</div>
-            <div className="mb-2">Age: {showProfile.age}</div>
-            <div className="mb-2 flex gap-2">
-              {TAGS.map(tag => (
-                showProfile.tags && showProfile.tags.includes(tag) ? (
-                  <button key={tag} className="bg-red-100 text-red-700 px-2 py-1 rounded" onClick={() => removeTag(showProfile.id, tag)}>Remove {tag}</button>
-                ) : (
-                  <button key={tag} className="bg-blue-100 text-blue-700 px-2 py-1 rounded" onClick={() => assignTag(showProfile.id, tag)}>Add {tag}</button>
-                )
-              ))}
+    <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6 mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Church Members</h1>
+              <p className="text-gray-600 text-sm sm:text-base">Manage your church community members</p>
             </div>
-            <button className="mt-4 bg-gray-300 px-4 py-1 rounded" onClick={() => setShowProfile(null)}>Close</button>
+            <button
+              onClick={() => handleModalOpen('add')}
+              className="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200 min-h-[44px] text-sm sm:text-base"
+            >
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Add Member
+            </button>
           </div>
         </div>
-      )}
-      {/* Edit Member Modal */}
-      {showEdit && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm">
-          <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md transform transition-all max-h-[90vh] flex flex-col">
-            <div className="flex justify-between items-center mb-6 flex-shrink-0">
-              <h2 className="text-2xl font-bold text-gray-800">Edit Member</h2>
-              <button onClick={() => setShowEdit(null)} className="text-gray-500 hover:text-gray-700 transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+
+        {/* Filters */}
+        <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Search</label>
+              <input
+                type="text"
+                placeholder="Search by name or email..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              />
             </div>
-            <div className="space-y-4 overflow-y-auto flex-grow pr-2 custom-scrollbar">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
-                <input 
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" 
-                  placeholder="Enter first name" 
-                  value={showEdit.first_name} 
-                  onChange={e => setShowEdit({ ...showEdit, first_name: e.target.value })} 
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
-                <input 
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" 
-                  placeholder="Enter last name" 
-                  value={showEdit.last_name} 
-                  onChange={e => setShowEdit({ ...showEdit, last_name: e.target.value })} 
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                <input 
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" 
-                  placeholder="Enter email address" 
-                  value={showEdit.email} 
-                  onChange={e => setShowEdit({ ...showEdit, email: e.target.value })} 
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
-                <select 
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" 
-                  value={showEdit.gender} 
-                  onChange={e => setShowEdit({ ...showEdit, gender: e.target.value })}
-                >
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Church</label>
-                <select 
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" 
-                  value={showEdit.church} 
-                  onChange={e => setShowEdit({ ...showEdit, church: e.target.value })}
-                >
-                  {CHURCHES.map(d => <option key={d} value={d}>{d}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Tags</label>
-                <div className="flex flex-wrap gap-2">
-                  {TAGS.map(tag => (
-                    <label key={tag} className="inline-flex items-center">
-                      <input 
-                        type="checkbox" 
-                        className="form-checkbox h-4 w-4 text-blue-600 transition duration-150 ease-in-out" 
-                        checked={(showEdit.tags || []).includes(tag)} 
-                        onChange={e => {
-                          if (e.target.checked) setShowEdit({ ...showEdit, tags: [...(showEdit.tags || []), tag] });
-                          else setShowEdit({ ...showEdit, tags: (showEdit.tags || []).filter(t => t !== tag) });
-                        }} 
-                      />
-                      <span className="ml-2 text-sm text-gray-700">{tag}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            </div>
-            <div className="flex justify-end gap-3 mt-8 flex-shrink-0 pt-4 border-t border-gray-100">
-              <button 
-                className="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors" 
-                onClick={() => setShowEdit(null)}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Church</label>
+              <select
+                value={selectedChurch}
+                onChange={(e) => setSelectedChurch(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
               >
-                Cancel
-              </button>
-              <button 
-                className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors" 
+                <option value="">All Churches</option>
+                {CHURCHES.map(church => (
+                  <option key={church} value={church}>{church}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+              <select
+                value={selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              >
+                <option value="">All Status</option>
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+                <option value="Visitor">Visitor</option>
+              </select>
+            </div>
+            <div className="flex items-end">
+              <button
                 onClick={() => {
-                  handleEdit(showEdit.id, showEdit);
-                  setShowEdit(null);
+                  setSearchTerm('');
+                  setSelectedChurch('');
+                  setSelectedStatus('');
+                  setCurrentPage(1);
                 }}
+                className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors duration-200 min-h-[44px] text-sm"
               >
-                Save Changes
+                Clear Filters
               </button>
             </div>
           </div>
         </div>
-      )}
-      {/* Add Member Modal */}
-      {showAdd && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm">
-          <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md transform transition-all max-h-[90vh] flex flex-col">
-            <div className="flex justify-between items-center mb-6 flex-shrink-0">
-              <h2 className="text-2xl font-bold text-gray-800">Add New Member</h2>
-              <button onClick={() => setShowAdd(false)} className="text-gray-500 hover:text-gray-700 transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+
+        {/* Results Summary */}
+        <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6 mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="text-sm text-gray-600">
+              Showing {paginatedMembers.length} of {filteredMembers.length} members
+              {searchTerm || selectedChurch || selectedStatus ? ` (filtered from ${members.length} total)` : ''}
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">Sort by:</span>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="name">Name</option>
+                <option value="church">Church</option>
+                <option value="status">Status</option>
+                <option value="joinDate">Join Date</option>
+              </select>
+              <button
+                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                className="p-1 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[32px] min-w-[32px] flex items-center justify-center"
+              >
+                <svg className={`w-4 h-4 transform transition-transform ${sortOrder === 'desc' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
                 </svg>
               </button>
             </div>
-            <div className="space-y-4 overflow-y-auto flex-grow pr-2 custom-scrollbar">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
-                <input 
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" 
-                  placeholder="Enter first name" 
-                  value={newMember.first_name} 
-                  onChange={e => setNewMember({ ...newMember, first_name: e.target.value })} 
+          </div>
+        </div>
+
+        {/* Mobile Card View */}
+        <div className="block md:hidden space-y-4 mb-6">
+          {paginatedMembers.map((member) => (
+            <div key={member.id} className="bg-white rounded-xl shadow-sm p-4 border border-gray-200">
+              <div className="flex items-start gap-4">
+                <img
+                  src={member.avatar}
+                  alt={member.name}
+                  className="w-12 h-12 rounded-full object-cover flex-shrink-0"
+                  onError={(e) => {
+                    e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=3b82f6&color=ffffff&size=128`;
+                  }}
                 />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
-                <input 
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" 
-                  placeholder="Enter last name" 
-                  value={newMember.last_name} 
-                  onChange={e => setNewMember({ ...newMember, last_name: e.target.value })} 
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                <input 
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" 
-                  placeholder="Enter email address" 
-                  value={newMember.email} 
-                  onChange={e => setNewMember({ ...newMember, email: e.target.value })} 
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
-                <select 
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" 
-                  value={newMember.gender} 
-                  onChange={e => setNewMember({ ...newMember, gender: e.target.value })}
-                >
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Church</label>
-                <select 
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" 
-                  value={newMember.church} 
-                  onChange={e => setNewMember({ ...newMember, church: e.target.value })}
-                >
-                  {CHURCHES.map(d => <option key={d} value={d}>{d}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Tags</label>
-                <div className="flex flex-wrap gap-2">
-                  {TAGS.map(tag => (
-                    <label key={tag} className="inline-flex items-center">
-                      <input 
-                        type="checkbox" 
-                        className="form-checkbox h-4 w-4 text-blue-600 transition duration-150 ease-in-out" 
-                        checked={newMember.tags.includes(tag)} 
-                        onChange={e => {
-                          if (e.target.checked) setNewMember({ ...newMember, tags: [...newMember.tags, tag] });
-                          else setNewMember({ ...newMember, tags: newMember.tags.filter(t => t !== tag) });
-                        }} 
-                      />
-                      <span className="ml-2 text-sm text-gray-700">{tag}</span>
-                    </label>
-                  ))}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <h3 className="font-semibold text-gray-900 truncate">{member.name}</h3>
+                      <p className="text-sm text-gray-600 truncate">{member.email}</p>
+                    </div>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium flex-shrink-0 ${
+                      member.status === 'Active' ? 'bg-green-100 text-green-800' :
+                      member.status === 'Inactive' ? 'bg-red-100 text-red-800' :
+                      'bg-yellow-100 text-yellow-800'
+                    }`}>
+                      {member.status}
+                    </span>
+                  </div>
+                  <div className="text-sm text-gray-600 space-y-1 mb-3">
+                    <p><span className="font-medium">Church:</span> {member.church}</p>
+                    <p><span className="font-medium">Phone:</span> {member.phone}</p>
+                    <p><span className="font-medium">Joined:</span> {new Date(member.joinDate).toLocaleDateString()}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleModalOpen('view', member)}
+                      className="flex-1 px-3 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200 text-sm font-medium min-h-[40px]"
+                    >
+                      View
+                    </button>
+                    <button
+                      onClick={() => handleModalOpen('edit', member)}
+                      className="flex-1 px-3 py-2 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors duration-200 text-sm font-medium min-h-[40px]"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(member.id)}
+                      className="px-3 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors duration-200 min-h-[40px] min-w-[40px] flex items-center justify-center"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
-            <div className="flex justify-end gap-3 mt-8 flex-shrink-0 pt-4 border-t border-gray-100">
-              <button 
-                className="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors" 
-                onClick={() => setShowAdd(false)}
+          ))}
+        </div>
+
+        {/* Desktop Table View */}
+        <div className="hidden md:block bg-white rounded-xl shadow-sm overflow-hidden mb-6">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <button
+                      onClick={() => handleSort('name')}
+                      className="flex items-center gap-1 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
+                    >
+                      Member
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                      </svg>
+                    </button>
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <button
+                      onClick={() => handleSort('church')}
+                      className="flex items-center gap-1 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
+                    >
+                      Church
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                      </svg>
+                    </button>
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <button
+                      onClick={() => handleSort('status')}
+                      className="flex items-center gap-1 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
+                    >
+                      Status
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                      </svg>
+                    </button>
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <button
+                      onClick={() => handleSort('joinDate')}
+                      className="flex items-center gap-1 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
+                    >
+                      Join Date
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                      </svg>
+                    </button>
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {paginatedMembers.map((member) => (
+                  <tr key={member.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <img
+                          src={member.avatar}
+                          alt={member.name}
+                          className="w-10 h-10 rounded-full object-cover mr-4"
+                          onError={(e) => {
+                            e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=3b82f6&color=ffffff&size=128`;
+                          }}
+                        />
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">{member.name}</div>
+                          <div className="text-sm text-gray-500">{member.email}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{member.church}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{member.phone}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        member.status === 'Active' ? 'bg-green-100 text-green-800' :
+                        member.status === 'Inactive' ? 'bg-red-100 text-red-800' :
+                        'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {member.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {new Date(member.joinDate).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => handleModalOpen('view', member)}
+                          className="text-blue-600 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded p-1"
+                          title="View member"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => handleModalOpen('edit', member)}
+                          className="text-gray-600 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 rounded p-1"
+                          title="Edit member"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => handleDelete(member.id)}
+                          className="text-red-600 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 rounded p-1"
+                          title="Delete member"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Pagination */}
+        <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="text-sm text-gray-600">
+              Page {currentPage} of {totalPages} ({filteredMembers.length} total members)
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 min-h-[40px] text-sm"
               >
-                Cancel
+                Previous
               </button>
-              <button 
-                className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors" 
-                onClick={handleAdd}
+              <div className="hidden sm:flex items-center gap-1">
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  const page = i + 1;
+                  return (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200 min-h-[40px] min-w-[40px] text-sm ${
+                        currentPage === page
+                          ? 'bg-blue-600 text-white'
+                          : 'border border-gray-300 hover:bg-gray-50 text-gray-700'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  );
+                })}
+              </div>
+              <button
+                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                disabled={currentPage === totalPages}
+                className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 min-h-[40px] text-sm"
               >
-                Add Member
+                Next
               </button>
             </div>
           </div>
         </div>
-      )}
+
+        {/* Modal */}
+        {showModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+              <div className="sticky top-0 bg-white px-6 py-4 border-b border-gray-200 rounded-t-xl">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-semibold text-gray-900">
+                    {modalType === 'view' ? 'Member Profile' :
+                     modalType === 'edit' ? 'Edit Member' : 'Add New Member'}
+                  </h2>
+                  <button
+                    onClick={() => setShowModal(false)}
+                    className="p-2 hover:bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 min-h-[44px] min-w-[44px] flex items-center justify-center"
+                  >
+                    <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              
+              <div className="p-6">
+                {modalType === 'view' && selectedMember ? (
+                  <div className="space-y-6">
+                    <div className="text-center">
+                      <img
+                        src={selectedMember.avatar}
+                        alt={selectedMember.name}
+                        className="w-24 h-24 rounded-full object-cover mx-auto mb-4"
+                        onError={(e) => {
+                          e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedMember.name)}&background=3b82f6&color=ffffff&size=128`;
+                        }}
+                      />
+                      <h3 className="text-2xl font-bold text-gray-900 mb-2">{selectedMember.name}</h3>
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                        selectedMember.status === 'Active' ? 'bg-green-100 text-green-800' :
+                        selectedMember.status === 'Inactive' ? 'bg-red-100 text-red-800' :
+                        'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {selectedMember.status}
+                      </span>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                      <div>
+                        <h4 className="font-medium text-gray-900 mb-3">Contact Information</h4>
+                        <div className="space-y-2 text-sm">
+                          <p><span className="font-medium">Email:</span> {selectedMember.email}</p>
+                          <p><span className="font-medium">Phone:</span> {selectedMember.phone}</p>
+                          <p><span className="font-medium">Address:</span> {selectedMember.address || 'Not provided'}</p>
+                        </div>
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-gray-900 mb-3">Church Information</h4>
+                        <div className="space-y-2 text-sm">
+                          <p><span className="font-medium">Church:</span> {selectedMember.church}</p>
+                          <p><span className="font-medium">Join Date:</span> {new Date(selectedMember.joinDate).toLocaleDateString()}</p>
+                          <p><span className="font-medium">Ministry:</span> {selectedMember.ministry || 'Not specified'}</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {selectedMember.notes && (
+                      <div>
+                        <h4 className="font-medium text-gray-900 mb-3">Notes</h4>
+                        <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">{selectedMember.notes}</p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <form onSubmit={handleFormSubmit} className="space-y-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
+                        <input
+                          type="text"
+                          required
+                          value={formData.name}
+                          onChange={(e) => setFormData({...formData, name: e.target.value})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+                        <input
+                          type="email"
+                          required
+                          value={formData.email}
+                          onChange={(e) => setFormData({...formData, email: e.target.value})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
+                        <input
+                          type="tel"
+                          value={formData.phone}
+                          onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Church *</label>
+                        <select
+                          required
+                          value={formData.church}
+                          onChange={(e) => setFormData({...formData, church: e.target.value})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        >
+                          <option value="">Select Church</option>
+                          {CHURCHES.map(church => (
+                            <option key={church} value={church}>{church}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                        <select
+                          value={formData.status}
+                          onChange={(e) => setFormData({...formData, status: e.target.value})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        >
+                          <option value="Active">Active</option>
+                          <option value="Inactive">Inactive</option>
+                          <option value="Visitor">Visitor</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Join Date</label>
+                        <input
+                          type="date"
+                          value={formData.joinDate}
+                          onChange={(e) => setFormData({...formData, joinDate: e.target.value})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
+                      <input
+                        type="text"
+                        value={formData.address}
+                        onChange={(e) => setFormData({...formData, address: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Ministry</label>
+                      <input
+                        type="text"
+                        value={formData.ministry}
+                        onChange={(e) => setFormData({...formData, ministry: e.target.value})}
+                        placeholder="e.g., Youth Ministry, Worship Team, etc."
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Notes</label>
+                      <textarea
+                        rows={3}
+                        value={formData.notes}
+                        onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                        placeholder="Additional notes about the member..."
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                      />
+                    </div>
+                    
+                    <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                      <button
+                        type="submit"
+                        className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200 min-h-[44px] font-medium"
+                      >
+                        {modalType === 'edit' ? 'Update Member' : 'Add Member'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowModal(false)}
+                        className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors duration-200 min-h-[44px] font-medium"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
-}
+};
+
+export default Members;
