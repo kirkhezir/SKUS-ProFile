@@ -8,7 +8,7 @@ import { sampleMembers, CHURCHES } from '../pages/Dashboard';
  */
 const Members = () => {
   // Transform the sample members data to match expected format
-  const transformedMembers = useMemo(() => 
+  const transformedMembers = useMemo(() =>
     sampleMembers.map(member => ({
       id: member.id,
       name: `${member.first_name} ${member.last_name}`,
@@ -63,10 +63,10 @@ const Members = () => {
   const filteredMembers = useMemo(() => {
     let filtered = members.filter(member => {
       const matchesSearch = member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           member.email.toLowerCase().includes(searchTerm.toLowerCase());
+        member.email.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesChurch = !selectedChurch || member.church === selectedChurch;
       const matchesStatus = !selectedStatus || member.status === selectedStatus;
-      
+
       return matchesSearch && matchesChurch && matchesStatus;
     });
 
@@ -74,12 +74,12 @@ const Members = () => {
     filtered.sort((a, b) => {
       let aValue = a[sortBy];
       let bValue = b[sortBy];
-      
+
       if (sortBy === 'joinDate') {
         aValue = new Date(aValue);
         bValue = new Date(bValue);
       }
-      
+
       if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
       if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
       return 0;
@@ -206,7 +206,7 @@ const Members = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Search Input */}
             <div className="lg:col-span-2">
-              <label 
+              <label
                 htmlFor="search-input"
                 className="block text-sm font-medium text-gray-700 mb-2"
               >
@@ -214,18 +214,18 @@ const Members = () => {
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg 
-                    className="h-5 w-5 text-gray-400" 
-                    fill="none" 
-                    stroke="currentColor" 
+                  <svg
+                    className="h-5 w-5 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
                     viewBox="0 0 24 24"
                     aria-hidden="true"
                   >
-                    <path 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round" 
-                      strokeWidth={2} 
-                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" 
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                     />
                   </svg>
                 </div>
@@ -261,7 +261,7 @@ const Members = () => {
 
             {/* Church Filter */}
             <div>
-              <label 
+              <label
                 htmlFor="church-filter"
                 className="block text-sm font-medium text-gray-700 mb-2"
               >
@@ -301,7 +301,7 @@ const Members = () => {
 
             {/* Status Filter */}
             <div>
-              <label 
+              <label
                 htmlFor="status-filter"
                 className="block text-sm font-medium text-gray-700 mb-2"
               >
@@ -364,7 +364,7 @@ const Members = () => {
                 </>
               )}
             </div>
-            
+
             <button
               onClick={handleClearFilters}
               className="
@@ -388,18 +388,18 @@ const Members = () => {
               "
               type="button"
             >
-              <svg 
-                className="w-4 h-4 inline mr-2" 
-                fill="none" 
-                stroke="currentColor" 
+              <svg
+                className="w-4 h-4 inline mr-2"
+                fill="none"
+                stroke="currentColor"
                 viewBox="0 0 24 24"
                 aria-hidden="true"
               >
-                <path 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  strokeWidth={2} 
-                  d="M6 18L18 6M6 6l12 12" 
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
                 />
               </svg>
               Clear Filters
@@ -442,8 +442,8 @@ const Members = () => {
         <div className="block md:hidden space-y-4 mb-6">
           {paginatedMembers.length > 0 ? (
             paginatedMembers.map((member) => (
-              <article 
-                key={member.id} 
+              <article
+                key={member.id}
                 className="
                   bg-white 
                   rounded-xl 
@@ -466,7 +466,7 @@ const Members = () => {
                       loading="lazy"
                     />
                   </div>
-                  
+
                   <div className="flex-1 min-w-0">
                     {/* Header with name and status */}
                     <div className="flex items-start justify-between mb-3">
@@ -478,7 +478,7 @@ const Members = () => {
                           {member.email}
                         </p>
                       </div>
-                      <span 
+                      <span
                         className={`
                           px-2.5 
                           py-1 
@@ -495,60 +495,60 @@ const Members = () => {
                         {member.status}
                       </span>
                     </div>
-                    
+
                     {/* Member details */}
                     <div className="space-y-2 text-sm text-gray-600 mb-4">
                       <div className="flex items-center gap-2">
-                        <svg 
-                          className="w-4 h-4 text-gray-400 flex-shrink-0" 
-                          fill="none" 
-                          stroke="currentColor" 
+                        <svg
+                          className="w-4 h-4 text-gray-400 flex-shrink-0"
+                          fill="none"
+                          stroke="currentColor"
                           viewBox="0 0 24 24"
                           aria-hidden="true"
                         >
-                          <path 
-                            strokeLinecap="round" 
-                            strokeLinejoin="round" 
-                            strokeWidth={2} 
-                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0v2a2 2 0 01-2 2H7a2 2 0 01-2-2v-2m14 0V9a2 2 0 00-2-2H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2z" 
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0v2a2 2 0 01-2 2H7a2 2 0 01-2-2v-2m14 0V9a2 2 0 00-2-2H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2z"
                           />
                         </svg>
                         <span className="font-medium min-w-0">Church:</span>
                         <span className="truncate">{member.church}</span>
                       </div>
-                      
+
                       <div className="flex items-center gap-2">
-                        <svg 
-                          className="w-4 h-4 text-gray-400 flex-shrink-0" 
-                          fill="none" 
-                          stroke="currentColor" 
+                        <svg
+                          className="w-4 h-4 text-gray-400 flex-shrink-0"
+                          fill="none"
+                          stroke="currentColor"
                           viewBox="0 0 24 24"
                           aria-hidden="true"
                         >
-                          <path 
-                            strokeLinecap="round" 
-                            strokeLinejoin="round" 
-                            strokeWidth={2} 
-                            d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" 
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
                           />
                         </svg>
                         <span className="font-medium min-w-0">Phone:</span>
                         <span className="truncate">{member.phone}</span>
                       </div>
-                      
+
                       <div className="flex items-center gap-2">
-                        <svg 
-                          className="w-4 h-4 text-gray-400 flex-shrink-0" 
-                          fill="none" 
-                          stroke="currentColor" 
+                        <svg
+                          className="w-4 h-4 text-gray-400 flex-shrink-0"
+                          fill="none"
+                          stroke="currentColor"
                           viewBox="0 0 24 24"
                           aria-hidden="true"
                         >
-                          <path 
-                            strokeLinecap="round" 
-                            strokeLinejoin="round" 
-                            strokeWidth={2} 
-                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" 
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
                           />
                         </svg>
                         <span className="font-medium min-w-0">Joined:</span>
@@ -557,7 +557,7 @@ const Members = () => {
                         </span>
                       </div>
                     </div>
-                    
+
                     {/* Action buttons */}
                     <div className="flex gap-2">
                       <button
@@ -586,29 +586,29 @@ const Members = () => {
                         "
                         aria-label={`View ${member.name}'s profile`}
                       >
-                        <svg 
-                          className="w-4 h-4" 
-                          fill="none" 
-                          stroke="currentColor" 
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
                           viewBox="0 0 24 24"
                           aria-hidden="true"
                         >
-                          <path 
-                            strokeLinecap="round" 
-                            strokeLinejoin="round" 
-                            strokeWidth={2} 
-                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" 
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
                           />
-                          <path 
-                            strokeLinecap="round" 
-                            strokeLinejoin="round" 
-                            strokeWidth={2} 
-                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" 
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
                           />
                         </svg>
                         View
                       </button>
-                      
+
                       <button
                         onClick={() => handleModalOpen('edit', member)}
                         className="
@@ -635,23 +635,23 @@ const Members = () => {
                         "
                         aria-label={`Edit ${member.name}'s information`}
                       >
-                        <svg 
-                          className="w-4 h-4" 
-                          fill="none" 
-                          stroke="currentColor" 
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
                           viewBox="0 0 24 24"
                           aria-hidden="true"
                         >
-                          <path 
-                            strokeLinecap="round" 
-                            strokeLinejoin="round" 
-                            strokeWidth={2} 
-                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" 
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
                           />
                         </svg>
                         Edit
                       </button>
-                      
+
                       <button
                         onClick={() => handleDelete(member.id)}
                         className="
@@ -675,18 +675,18 @@ const Members = () => {
                         "
                         aria-label={`Delete ${member.name}`}
                       >
-                        <svg 
-                          className="w-4 h-4" 
-                          fill="none" 
-                          stroke="currentColor" 
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
                           viewBox="0 0 24 24"
                           aria-hidden="true"
                         >
-                          <path 
-                            strokeLinecap="round" 
-                            strokeLinejoin="round" 
-                            strokeWidth={2} 
-                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" 
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                           />
                         </svg>
                       </button>
@@ -697,18 +697,18 @@ const Members = () => {
             ))
           ) : (
             <div className="bg-white rounded-xl shadow-sm p-8 text-center">
-              <svg 
-                className="mx-auto h-12 w-12 text-gray-400 mb-4" 
-                fill="none" 
-                stroke="currentColor" 
+              <svg
+                className="mx-auto h-12 w-12 text-gray-400 mb-4"
+                fill="none"
+                stroke="currentColor"
                 viewBox="0 0 24 24"
                 aria-hidden="true"
               >
-                <path 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  strokeWidth={2} 
-                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" 
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
                 />
               </svg>
               <h3 className="text-sm font-medium text-gray-900 mb-1">No members found</h3>
@@ -826,11 +826,10 @@ const Members = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{member.church}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{member.phone}</td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        member.status === 'Active' ? 'bg-green-100 text-green-800' :
-                        member.status === 'Inactive' ? 'bg-red-100 text-red-800' :
-                        'bg-yellow-100 text-yellow-800'
-                      }`}>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${member.status === 'Active' ? 'bg-green-100 text-green-800' :
+                          member.status === 'Inactive' ? 'bg-red-100 text-red-800' :
+                            'bg-yellow-100 text-yellow-800'
+                        }`}>
                         {member.status}
                       </span>
                     </td>
@@ -897,11 +896,10 @@ const Members = () => {
                     <button
                       key={page}
                       onClick={() => setCurrentPage(page)}
-                      className={`px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200 min-h-[40px] min-w-[40px] text-sm ${
-                        currentPage === page
+                      className={`px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200 min-h-[40px] min-w-[40px] text-sm ${currentPage === page
                           ? 'bg-blue-600 text-white'
                           : 'border border-gray-300 hover:bg-gray-50 text-gray-700'
-                      }`}
+                        }`}
                     >
                       {page}
                     </button>
@@ -927,7 +925,7 @@ const Members = () => {
                 <div className="flex items-center justify-between">
                   <h2 className="text-xl font-semibold text-gray-900">
                     {modalType === 'view' ? 'Member Profile' :
-                     modalType === 'edit' ? 'Edit Member' : 'Add New Member'}
+                      modalType === 'edit' ? 'Edit Member' : 'Add New Member'}
                   </h2>
                   <button
                     onClick={() => setShowModal(false)}
@@ -939,7 +937,7 @@ const Members = () => {
                   </button>
                 </div>
               </div>
-              
+
               <div className="p-6">
                 {modalType === 'view' && selectedMember ? (
                   <div className="space-y-6">
@@ -953,15 +951,14 @@ const Members = () => {
                         }}
                       />
                       <h3 className="text-2xl font-bold text-gray-900 mb-2">{selectedMember.name}</h3>
-                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                        selectedMember.status === 'Active' ? 'bg-green-100 text-green-800' :
-                        selectedMember.status === 'Inactive' ? 'bg-red-100 text-red-800' :
-                        'bg-yellow-100 text-yellow-800'
-                      }`}>
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${selectedMember.status === 'Active' ? 'bg-green-100 text-green-800' :
+                          selectedMember.status === 'Inactive' ? 'bg-red-100 text-red-800' :
+                            'bg-yellow-100 text-yellow-800'
+                        }`}>
                         {selectedMember.status}
                       </span>
                     </div>
-                    
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                       <div>
                         <h4 className="font-medium text-gray-900 mb-3">Contact Information</h4>
@@ -980,7 +977,7 @@ const Members = () => {
                         </div>
                       </div>
                     </div>
-                    
+
                     {selectedMember.notes && (
                       <div>
                         <h4 className="font-medium text-gray-900 mb-3">Notes</h4>
@@ -997,7 +994,7 @@ const Members = () => {
                           type="text"
                           required
                           value={formData.name}
-                          onChange={(e) => setFormData({...formData, name: e.target.value})}
+                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         />
                       </div>
@@ -1007,7 +1004,7 @@ const Members = () => {
                           type="email"
                           required
                           value={formData.email}
-                          onChange={(e) => setFormData({...formData, email: e.target.value})}
+                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         />
                       </div>
@@ -1016,7 +1013,7 @@ const Members = () => {
                         <input
                           type="tel"
                           value={formData.phone}
-                          onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         />
                       </div>
@@ -1025,7 +1022,7 @@ const Members = () => {
                         <select
                           required
                           value={formData.church}
-                          onChange={(e) => setFormData({...formData, church: e.target.value})}
+                          onChange={(e) => setFormData({ ...formData, church: e.target.value })}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         >
                           <option value="">Select Church</option>
@@ -1038,7 +1035,7 @@ const Members = () => {
                         <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
                         <select
                           value={formData.status}
-                          onChange={(e) => setFormData({...formData, status: e.target.value})}
+                          onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         >
                           <option value="Active">Active</option>
@@ -1051,44 +1048,44 @@ const Members = () => {
                         <input
                           type="date"
                           value={formData.joinDate}
-                          onChange={(e) => setFormData({...formData, joinDate: e.target.value})}
+                          onChange={(e) => setFormData({ ...formData, joinDate: e.target.value })}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         />
                       </div>
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
                       <input
                         type="text"
                         value={formData.address}
-                        onChange={(e) => setFormData({...formData, address: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Ministry</label>
                       <input
                         type="text"
                         value={formData.ministry}
-                        onChange={(e) => setFormData({...formData, ministry: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, ministry: e.target.value })}
                         placeholder="e.g., Youth Ministry, Worship Team, etc."
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Notes</label>
                       <textarea
                         rows={3}
                         value={formData.notes}
-                        onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                         placeholder="Additional notes about the member..."
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
                       />
                     </div>
-                    
+
                     <div className="flex flex-col sm:flex-row gap-3 pt-4">
                       <button
                         type="submit"

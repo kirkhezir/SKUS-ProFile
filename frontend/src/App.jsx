@@ -22,7 +22,7 @@ export default function App() {
       const mobile = window.innerWidth < 768;
       const tablet = window.innerWidth >= 768 && window.innerWidth < 1024;
       setIsMobile(mobile);
-      
+
       // Auto-collapse sidebar on mobile and small tablets
       if (mobile) {
         setSidebarCollapsed(true);
@@ -45,12 +45,12 @@ export default function App() {
   return (
     <div className="min-h-screen bg-gray-100 flex overflow-hidden">
       {/* Sidebar */}
-      <Sidebar 
-        collapsed={sidebarCollapsed} 
+      <Sidebar
+        collapsed={sidebarCollapsed}
         setCollapsed={setSidebarCollapsed}
         isMobile={isMobile}
       />
-      
+
       {/* Mobile overlay */}
       {isMobile && !sidebarCollapsed && (
         <div
@@ -61,7 +61,7 @@ export default function App() {
       )}
 
       {/* Main content */}
-      <main 
+      <main
         className={`
           flex-1 
           transition-all 
@@ -70,8 +70,8 @@ export default function App() {
           overflow-auto
           flex
           flex-col
-          ${sidebarCollapsed 
-            ? 'ml-0 md:ml-16' 
+          ${sidebarCollapsed
+            ? 'ml-0 md:ml-16'
             : 'ml-0 md:ml-64'
           }
         `}
@@ -113,7 +113,7 @@ export default function App() {
               </button>
               <h1 className="text-lg font-semibold text-gray-900">SKUS ProFile</h1>
             </div>
-            
+
             {/* Mobile user avatar */}
             <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold">
               A
