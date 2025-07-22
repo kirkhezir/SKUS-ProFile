@@ -60,17 +60,57 @@ export default function Members() {
   const [showEdit, setShowEdit] = useState(null);
   const [newMember, setNewMember] = useState({ first_name: '', last_name: '', email: '', gender: 'Male', church: CHURCHES[0], tags: [] });
   const [currentPage, setCurrentPage] = useState(1);
+  const [sortField, setSortField] = useState('');
+  const [sortDirection, setSortDirection] = useState('asc');
   const pageSize = 10;
 
   // Filtered and searched members
   const filteredMembers = useMemo(() => {
-    return members.filter(m =>
+    let filtered = members.filter(m =>
       (filterChurch === 'All' || m.church === filterChurch) &&
       (filterGender === 'All' || m.gender === filterGender) &&
       (filterTag === 'All' || (m.tags || []).includes(filterTag)) &&
       (`${m.first_name} ${m.last_name}`.toLowerCase().includes(search.toLowerCase()) || m.email.toLowerCase().includes(search.toLowerCase()))
     );
-  }, [members, filterChurch, filterGender, filterTag, search]);
+
+    // Apply sorting
+    if (sortField) {
+      filtered.sort((a, b) => {
+        let aValue, bValue;
+        
+        switch (sortField) {
+          case 'name':
+            aValue = `${a.first_name} ${a.last_name}`.toLowerCase();
+            bValue = `${b.first_name} ${b.last_name}`.toLowerCase();
+            break;
+          case 'church':
+            aValue = a.church.toLowerCase();
+            bValue = b.church.toLowerCase();
+            break;
+          case 'gender':
+            aValue = a.gender.toLowerCase();
+            bValue = b.gender.toLowerCase();
+            break;
+          case 'email':
+            aValue = a.email.toLowerCase();
+            bValue = b.email.toLowerCase();
+            break;
+          case 'tags':
+            aValue = (a.tags || []).join(', ').toLowerCase();
+            bValue = (b.tags || []).join(', ').toLowerCase();
+            break;
+          default:
+            return 0;
+        }
+
+        if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+        if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+
+    return filtered;
+  }, [members, filterChurch, filterGender, filterTag, search, sortField, sortDirection]);
 
   // Pagination
   const totalPages = Math.ceil(filteredMembers.length / pageSize);
@@ -116,6 +156,36 @@ export default function Members() {
     setMembers(members.map(m => m.id === id ? { ...m, tags: (m.tags || []).filter(t => t !== tag) } : m));
   };
 
+  // Sorting function
+  const handleSort = (field) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  // Sort indicator component
+  const SortIcon = ({ field }) => {
+    if (sortField !== field) {
+      return (
+        <svg className="w-4 h-4 ml-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+        </svg>
+      );
+    }
+    return sortDirection === 'asc' ? (
+      <svg className="w-4 h-4 ml-1 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+      </svg>
+    ) : (
+      <svg className="w-4 h-4 ml-1 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+      </svg>
+    );
+  };
+
   return (
     <div className="p-8">
       <h1 className="text-3xl font-bold mb-8 text-gray-900">Members</h1>
@@ -142,20 +212,75 @@ export default function Members() {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50 sticky top-0 z-10">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Select</th>
-              <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Avatar</th>
-              <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Name</th>
-              <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Church</th>
-              <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Gender</th>
-              <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Email</th>
-              <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Tags</th>
+              <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                <div className="flex items-center">
+                  <input 
+                    type="checkbox" 
+                    checked={pagedMembers.length > 0 && selected.length === pagedMembers.length && pagedMembers.every(m => selected.includes(m.id))} 
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        selectAll();
+                      } else {
+                        clearSelected();
+                      }
+                    }}
+                    className="form-checkbox h-4 w-4 text-blue-600" 
+                  />
+                  <span className="ml-2">Select</span>
+                </div>
+              </th>
+              <th 
+                className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                onClick={() => handleSort('name')}
+              >
+                <div className="flex items-center">
+                  Name
+                  <SortIcon field="name" />
+                </div>
+              </th>
+              <th 
+                className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                onClick={() => handleSort('church')}
+              >
+                <div className="flex items-center">
+                  Church
+                  <SortIcon field="church" />
+                </div>
+              </th>
+              <th 
+                className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                onClick={() => handleSort('gender')}
+              >
+                <div className="flex items-center">
+                  Gender
+                  <SortIcon field="gender" />
+                </div>
+              </th>
+              <th 
+                className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                onClick={() => handleSort('email')}
+              >
+                <div className="flex items-center">
+                  Email
+                  <SortIcon field="email" />
+                </div>
+              </th>
+              <th 
+                className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                onClick={() => handleSort('tags')}
+              >
+                <div className="flex items-center">
+                  Tags
+                  <SortIcon field="tags" />
+                </div>
+              </th>
               <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-100">
             {pagedMembers.length === 0 ? (
               <tr>
-                <td colSpan={8} className="py-6 px-6 text-center text-gray-400">No members found</td>
+                <td colSpan={7} className="py-6 px-6 text-center text-gray-400">No members found</td>
               </tr>
             ) : (
               pagedMembers.map(m => (
@@ -163,10 +288,26 @@ export default function Members() {
                   <td className="px-6 py-4">
                     <input type="checkbox" checked={selected.includes(m.id)} onChange={() => toggleSelect(m.id)} className="form-checkbox h-4 w-4 text-blue-600" />
                   </td>
-                  <td className="px-6 py-4">
-                    <img src={m.image_url || '/default-avatar.png'} alt="avatar" className="w-10 h-10 rounded-full border border-gray-300 shadow-sm" />
+                  <td className="px-6 py-4 font-semibold text-gray-900">
+                    <div className="flex items-center">
+                      {m.image_url ? (
+                        <img src={m.image_url} alt="avatar" className="w-10 h-10 rounded-full border border-gray-300 shadow-sm mr-3" />
+                      ) : (
+                        <div className={`w-10 h-10 rounded-full border border-gray-300 shadow-sm mr-3 flex items-center justify-center text-white font-semibold ${m.gender === 'Male' ? 'bg-blue-500' : 'bg-pink-500'}`}>
+                          {m.gender === 'Male' ? (
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" className="w-6 h-6">
+                              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                            </svg>
+                          ) : (
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" className="w-6 h-6">
+                              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                            </svg>
+                          )}
+                        </div>
+                      )}
+                      <span>{m.first_name} {m.last_name}</span>
+                    </div>
                   </td>
-                  <td className="px-6 py-4 font-semibold text-gray-900">{m.first_name} {m.last_name}</td>
                   <td className="px-6 py-4">
                     <span className="inline-block bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-medium">{m.church}</span>
                   </td>
