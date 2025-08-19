@@ -1,4 +1,18 @@
 {
+  "name": "skus-profile",
+  "version": "1.0.0",
+  "description": "Church Member Management System",
+  "scripts": {
+    "build": "cd frontend && npm install && npm run build",
+    "dev": "cd frontend && npm run dev",
+    "install-frontend": "cd frontend && npm install"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kirkhezir/SKUS-ProFile.git"
+  },
+  "author": "kirkhezir",
+  "license": "MIT",
   "dependencies": {
     "chart.js": "^4.5.0",
     "chartjs-plugin-datalabels": "^2.2.0",
