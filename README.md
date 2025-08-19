@@ -7,33 +7,38 @@ A modern, responsive web application for managing church members across multiple
 ## 🚀 Features
 
 ### 📊 Dashboard & Analytics
+
 - **Comprehensive Dashboard** with member statistics and growth metrics
 - **Interactive Charts** showing demographics, age distribution, and trends
 - **Church Performance** rankings and engagement metrics
 - **Real-time Analytics** with member activity tracking
 
 ### 👥 Member Management
+
 - **Complete CRUD Operations** for member records
 - **Photo Upload** support for member profiles
 - **Multi-Church Support** for different locations
 - **Advanced Filtering** by church, gender, and other criteria
 
 ### 📱 Responsive Design
+
 - **Mobile-First** approach with touch-friendly interface
 - **Adaptive Sidebar** that collapses on mobile devices
 - **Touch Gestures** for mobile navigation
 - **Cross-Device** compatibility
 
 ### 🏛️ Multi-Church Architecture
+
 - Support for multiple church locations:
   - Suphan Buri
-  - Kanchanaburi 
+  - Kanchanaburi
   - Uthai Thani
   - Sing Buri
 
 ## 🛠️ Technology Stack
 
 ### Backend
+
 - **FastAPI** - Modern Python web framework
 - **SQLAlchemy** - Database ORM
 - **Pydantic** - Data validation
@@ -41,6 +46,7 @@ A modern, responsive web application for managing church members across multiple
 - **Python 3.8+**
 
 ### Frontend
+
 - **React 18** - User interface library
 - **Vite** - Build tool and development server
 - **Tailwind CSS** - Utility-first CSS framework
@@ -51,8 +57,9 @@ A modern, responsive web application for managing church members across multiple
 ## 📦 Installation
 
 ### Prerequisites
+
 - **Python 3.8+**
-- **Node.js 16+** 
+- **Node.js 16+**
 - **npm or yarn**
 
 ### Backend Setup
@@ -70,10 +77,13 @@ A modern, responsive web application for managing church members across multiple
 
 3. **Activate virtual environment**
    \`\`\`bash
+
    # Windows
+
    .venv\\Scripts\\activate
-   
+
    # macOS/Linux
+
    source .venv/bin/activate
    \`\`\`
 
@@ -112,35 +122,36 @@ A modern, responsive web application for managing church members across multiple
 \`\`\`
 memberhub/
 ├── backend/
-│   ├── app/
-│   │   ├── main.py              # FastAPI application
-│   │   ├── schemas.py           # Pydantic models
-│   │   ├── db/
-│   │   │   ├── database.py      # Database configuration
-│   │   │   └── models.py        # SQLAlchemy models
-│   │   └── services/
-│   │       └── crud.py          # Database operations
-│   └── static/                  # Static files
+│ ├── app/
+│ │ ├── main.py # FastAPI application
+│ │ ├── schemas.py # Pydantic models
+│ │ ├── db/
+│ │ │ ├── database.py # Database configuration
+│ │ │ └── models.py # SQLAlchemy models
+│ │ └── services/
+│ │ └── crud.py # Database operations
+│ └── static/ # Static files
 ├── frontend/
-│   ├── src/
-│   │   ├── components/
-│   │   │   └── Sidebar.jsx      # Navigation sidebar
-│   │   ├── pages/
-│   │   │   ├── Dashboard.jsx    # Main dashboard
-│   │   │   └── Members.jsx      # Member management
-│   │   ├── services/
-│   │   │   └── api.js           # API client
-│   │   ├── App.jsx              # Root component
-│   │   └── main.jsx             # Entry point
-│   ├── index.html
-│   ├── package.json
-│   └── vite.config.js
+│ ├── src/
+│ │ ├── components/
+│ │ │ └── Sidebar.jsx # Navigation sidebar
+│ │ ├── pages/
+│ │ │ ├── Dashboard.jsx # Main dashboard
+│ │ │ └── Members.jsx # Member management
+│ │ ├── services/
+│ │ │ └── api.js # API client
+│ │ ├── App.jsx # Root component
+│ │ └── main.jsx # Entry point
+│ ├── index.html
+│ ├── package.json
+│ └── vite.config.js
 └── README.md
 \`\`\`
 
 ## 🔧 API Endpoints
 
 ### Members
+
 - \`GET /api/members/\` - Get all members
 - \`POST /api/members/\` - Create new member
 - \`GET /api/members/{id}\` - Get member by ID
@@ -148,11 +159,13 @@ memberhub/
 - \`DELETE /api/members/{id}\` - Delete member
 
 ### File Upload
+
 - \`POST /api/members/{id}/upload\` - Upload member photo
 
 ## 🎨 Key Components
 
 ### Dashboard Features
+
 - **Executive Summary** with key metrics
 - **Action Required** section for member follow-ups
 - **Opportunities** for engagement and recognition
@@ -161,6 +174,7 @@ memberhub/
 - **Recent Activity** and member growth trends
 
 ### Responsive Sidebar
+
 - **Collapsible** design for different screen sizes
 - **Touch gestures** for mobile devices
 - **Tooltips** for collapsed state
@@ -169,12 +183,16 @@ memberhub/
 ## 🚀 Deployment
 
 ### Development
+
 Both servers support hot-reload for development:
+
 - Backend: Changes to Python files auto-restart the server
 - Frontend: Vite provides instant updates for React components
 
 ### Production
+
 For production deployment:
+
 1. Build the frontend: \`npm run build\`
 2. Configure environment variables
 3. Use a production ASGI server like Gunicorn
@@ -203,6 +221,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📞 Support
 
 For support and questions:
+
 - Create an issue in the GitHub repository
 - Contact the development team
 
