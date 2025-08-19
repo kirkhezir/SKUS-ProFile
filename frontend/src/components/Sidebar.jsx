@@ -216,7 +216,7 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
           flex 
           items-center 
           h-16 
-          px-4 
+          ${collapsed && !isMobile ? 'px-2' : 'px-4'}
           border-b 
           border-gray-200
           ${(collapsed && !isMobile) ? 'justify-center' : 'justify-between'}
@@ -272,7 +272,7 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
         </header>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto py-4" role="menubar">
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden py-4" role="menubar">
           <ul className={`space-y-1 ${collapsed && !isMobile ? 'px-2' : 'px-3'}`} role="none">
             {navigationItems.map((item) => (
               <li key={item.path} role="none">
@@ -284,19 +284,19 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
                     relative 
                     flex 
                     items-center 
-                    ${collapsed && !isMobile ? 'justify-center px-2 py-3' : 'px-3 py-2.5'} 
+                    ${collapsed && !isMobile ? 'justify-center px-1 py-3' : 'px-3 py-2.5'} 
                     rounded-lg 
                     transition-all
                     duration-200 
                     focus:outline-none 
                     focus:ring-2 
                     focus:ring-blue-500 
-                    focus:ring-offset-2
+                    ${collapsed && !isMobile ? 'focus:ring-offset-1' : 'focus:ring-offset-2'}
                     ${isActive(item.path)
                       ? 'bg-blue-50 text-blue-700 shadow-sm'
                       : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
                     }
-                    ${collapsed && !isMobile ? 'w-12 h-12 mx-auto' : ''}
+                    ${collapsed && !isMobile ? 'w-10 h-10 mx-auto' : ''}
                   `}
                   role="menuitem"
                   aria-current={isActive(item.path) ? 'page' : undefined}
