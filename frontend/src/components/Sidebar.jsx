@@ -407,11 +407,11 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
                 absolute left-16 ml-2
                 px-3 py-2
                 bg-gray-900 text-white text-sm font-medium
-                rounded-lg shadow-xl border border-gray-700
-                transition-all duration-200 ease-out
+                rounded-md border border-gray-700
+                transition-opacity duration-150 ease-out
                 whitespace-nowrap
                 -translate-y-1/2
-                ${hoveredItem === item.path && tooltipPosition.item === item.path ? 'opacity-100 visible translate-x-0' : 'opacity-0 invisible translate-x-2'}
+                ${hoveredItem === item.path && tooltipPosition.item === item.path ? 'opacity-100 visible' : 'opacity-0 invisible'}
               `}
               style={{
                 top: `${tooltipPosition.item === item.path ? tooltipPosition.top : 0}px`,
@@ -426,20 +426,19 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
           <div
             className={`
               absolute left-16 ml-2
-              px-4 py-3
+              px-3 py-2
               bg-blue-900 text-white text-sm
-              rounded-lg shadow-xl border border-blue-700
-              transition-all duration-200 ease-out
+              rounded-md border border-blue-700
+              transition-opacity duration-150 ease-out
               whitespace-nowrap
               -translate-y-1/2
-              ${hoveredProfile ? 'opacity-100 visible translate-x-0' : 'opacity-0 invisible translate-x-2'}
+              ${hoveredProfile ? 'opacity-100 visible' : 'opacity-0 invisible'}
             `}
             style={{
               top: `${profileTooltipPosition.top}px`,
             }}
           >
-            <div className="font-semibold text-blue-100">Admin User</div>
-            <div className="text-xs text-blue-200 mt-1">admin@memberhub.com</div>
+            <div className="font-medium">Admin User</div>
             <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-blue-900"></div>
           </div>
         </div>
