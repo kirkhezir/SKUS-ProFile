@@ -108,7 +108,7 @@ const navigationItems = [
 const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
   const location = useLocation();
   const sidebarRef = useRef(null);
-  
+
   // Tooltip state
   const [hoveredItem, setHoveredItem] = useState(null);
   const [hoveredProfile, setHoveredProfile] = useState(false);
@@ -287,9 +287,9 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
                   onMouseEnter={(e) => {
                     if (collapsed && !isMobile) {
                       const rect = e.currentTarget.getBoundingClientRect();
-                      setTooltipPosition({ 
-                        top: rect.top + (rect.height / 2), 
-                        item: item.path 
+                      setTooltipPosition({
+                        top: rect.top + (rect.height / 2),
+                        item: item.path
                       });
                       setHoveredItem(item.path);
                     }
@@ -353,7 +353,7 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
             onMouseEnter={(e) => {
               if (collapsed && !isMobile) {
                 const rect = e.currentTarget.getBoundingClientRect();
-                setProfileTooltipPosition({ 
+                setProfileTooltipPosition({
                   top: rect.top + (rect.height / 2)
                 });
                 setHoveredProfile(true);
