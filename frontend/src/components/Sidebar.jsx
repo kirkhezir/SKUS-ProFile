@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 /**
@@ -108,6 +108,12 @@ const navigationItems = [
 const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
   const location = useLocation();
   const sidebarRef = useRef(null);
+  
+  // Tooltip state
+  const [hoveredItem, setHoveredItem] = useState(null);
+  const [hoveredProfile, setHoveredProfile] = useState(false);
+  const [tooltipPosition, setTooltipPosition] = useState({ top: 0, item: null });
+  const [profileTooltipPosition, setProfileTooltipPosition] = useState({ top: 0 });
 
   /**
    * Check if a navigation path is currently active
@@ -278,7 +284,17 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
                 <Link
                   to={item.path}
                   onClick={handleNavClick}
-                  title={collapsed && !isMobile ? item.label : undefined}
+                  onMouseEnter={(e) => {
+                    if (collapsed && !isMobile) {
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      setTooltipPosition({ 
+                        top: rect.top + (rect.height / 2), 
+                        item: item.path 
+                      });
+                      setHoveredItem(item.path);
+                    }
+                  }}
+                  onMouseLeave={() => setHoveredItem(null)}
                   className={`
                     group 
                     relative 
@@ -334,7 +350,16 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
                 : 'flex items-center space-x-3'
               }
             `}
-            title={collapsed && !isMobile ? 'Admin User - admin@memberhub.com' : undefined}
+            onMouseEnter={(e) => {
+              if (collapsed && !isMobile) {
+                const rect = e.currentTarget.getBoundingClientRect();
+                setProfileTooltipPosition({ 
+                  top: rect.top + (rect.height / 2)
+                });
+                setHoveredProfile(true);
+              }
+            }}
+            onMouseLeave={() => setHoveredProfile(false)}
           >
             <div
               className={`
@@ -370,6 +395,55 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
           </div>
         </footer>
       </aside>
+
+      {/* Tooltips Portal - Rendered outside sidebar to avoid overflow */}
+      {collapsed && !isMobile && (
+        <div className="fixed pointer-events-none z-50">
+          {/* Navigation tooltips */}
+          {navigationItems.map((item) => (
+            <div
+              key={`tooltip-${item.path}`}
+              className={`
+                absolute left-16 ml-2
+                px-3 py-2
+                bg-gray-900 text-white text-sm font-medium
+                rounded-lg shadow-xl border border-gray-700
+                transition-all duration-200 ease-out
+                whitespace-nowrap
+                -translate-y-1/2
+                ${hoveredItem === item.path && tooltipPosition.item === item.path ? 'opacity-100 visible translate-x-0' : 'opacity-0 invisible translate-x-2'}
+              `}
+              style={{
+                top: `${tooltipPosition.item === item.path ? tooltipPosition.top : 0}px`,
+              }}
+            >
+              {item.label}
+              <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900"></div>
+            </div>
+          ))}
+
+          {/* User profile tooltip */}
+          <div
+            className={`
+              absolute left-16 ml-2
+              px-4 py-3
+              bg-blue-900 text-white text-sm
+              rounded-lg shadow-xl border border-blue-700
+              transition-all duration-200 ease-out
+              whitespace-nowrap
+              -translate-y-1/2
+              ${hoveredProfile ? 'opacity-100 visible translate-x-0' : 'opacity-0 invisible translate-x-2'}
+            `}
+            style={{
+              top: `${profileTooltipPosition.top}px`,
+            }}
+          >
+            <div className="font-semibold text-blue-100">Admin User</div>
+            <div className="text-xs text-blue-200 mt-1">admin@memberhub.com</div>
+            <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-blue-900"></div>
+          </div>
+        </div>
+      )}
     </>
   );
 };
