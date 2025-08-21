@@ -115,6 +115,15 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
   const [tooltipPosition, setTooltipPosition] = useState({ top: 0, item: null });
   const [profileTooltipPosition, setProfileTooltipPosition] = useState({ top: 0 });
 
+  // Detect if device supports hover (not touch-only)
+  const [supportsHover, setSupportsHover] = useState(true);
+
+  useEffect(() => {
+    // Check if device supports hover
+    const hasHover = window.matchMedia('(hover: hover)').matches;
+    setSupportsHover(hasHover);
+  }, []);
+
   /**
    * Check if a navigation path is currently active
    */
@@ -277,7 +286,7 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
         </header>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto py-4" role="menubar">
+        <nav className="flex-1 overflow-y-auto py-4 min-h-0" role="menubar">
           <ul className={`space-y-1 ${collapsed && !isMobile ? 'px-1' : 'px-3'}`} role="none">
             {navigationItems.map((item) => (
               <li key={item.path} role="none">
@@ -285,7 +294,7 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
                   to={item.path}
                   onClick={handleNavClick}
                   onMouseEnter={(e) => {
-                    if (collapsed && !isMobile) {
+                    if (collapsed && !isMobile && supportsHover) {
                       const rect = e.currentTarget.getBoundingClientRect();
                       setTooltipPosition({
                         top: rect.top + (rect.height / 2),
@@ -294,7 +303,11 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
                       setHoveredItem(item.path);
                     }
                   }}
-                  onMouseLeave={() => setHoveredItem(null)}
+                  onMouseLeave={() => {
+                    if (supportsHover) {
+                      setHoveredItem(null);
+                    }
+                  }}
                   className={`
                     group 
                     relative 
@@ -342,6 +355,7 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
           border-gray-200 
           ${collapsed && !isMobile ? 'p-2' : 'p-4'}
           ${(collapsed && !isMobile) ? 'flex items-center justify-center' : ''}
+          flex-shrink-0
         `}>
           <div
             className={`
@@ -351,7 +365,7 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
               }
             `}
             onMouseEnter={(e) => {
-              if (collapsed && !isMobile) {
+              if (collapsed && !isMobile && supportsHover) {
                 const rect = e.currentTarget.getBoundingClientRect();
                 setProfileTooltipPosition({
                   top: rect.top + (rect.height / 2)
@@ -359,7 +373,11 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
                 setHoveredProfile(true);
               }
             }}
-            onMouseLeave={() => setHoveredProfile(false)}
+            onMouseLeave={() => {
+              if (supportsHover) {
+                setHoveredProfile(false);
+              }
+            }}
           >
             <div
               className={`
@@ -397,7 +415,7 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
       </aside>
 
       {/* Tooltips Portal - Rendered outside sidebar to avoid overflow */}
-      {collapsed && !isMobile && (
+      {collapsed && !isMobile && supportsHover && (
         <div className="fixed pointer-events-none z-50">
           {/* Navigation tooltips */}
           {navigationItems.map((item) => (
