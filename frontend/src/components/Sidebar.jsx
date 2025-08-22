@@ -202,7 +202,7 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
       <aside
         ref={sidebarRef}
         className={`
-          h-screen 
+          ${isMobile ? 'h-[100dvh]' : 'h-screen'} 
           bg-white 
           fixed 
           left-0 
@@ -234,6 +234,7 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
           border-b 
           border-gray-200
           ${(collapsed && !isMobile) ? 'justify-center' : 'justify-between'}
+          flex-shrink-0
         `}>
           {(!collapsed || isMobile) && (
             <div className="flex items-center">
@@ -286,7 +287,10 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
         </header>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto py-4 min-h-0" role="menubar">
+        <nav className={`
+          flex-1 overflow-y-auto py-4 min-h-0
+          ${isMobile ? 'max-h-[calc(100dvh-8rem)]' : ''}
+        `} role="menubar">
           <ul className={`space-y-1 ${collapsed && !isMobile ? 'px-1' : 'px-3'}`} role="none">
             {navigationItems.map((item) => (
               <li key={item.path} role="none">
@@ -356,6 +360,7 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
           ${collapsed && !isMobile ? 'p-2' : 'p-4'}
           ${(collapsed && !isMobile) ? 'flex items-center justify-center' : ''}
           flex-shrink-0
+          ${isMobile ? 'min-h-[4rem]' : ''}
         `}>
           <div
             className={`
