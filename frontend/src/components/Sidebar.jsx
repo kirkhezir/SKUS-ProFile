@@ -236,11 +236,28 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
           ${(collapsed && !isMobile) ? 'justify-center' : 'justify-between'}
           flex-shrink-0
         `}>
+          {/* Logo - Full size when expanded or on mobile */}
           {(!collapsed || isMobile) && (
-            <div className="flex items-center">
-              <h1 className="text-xl font-bold text-gray-800 truncate">
-                SKUS ProFile
+            <div className="flex items-center justify-center space-x-3">
+              <img
+                src="/SKUS.svg"
+                alt="SKUS"
+                className="h-12 w-auto object-contain filter brightness-110 contrast-110 saturate-150 drop-shadow-sm"
+              />
+              <h1 className="text-2xl font-bold text-gray-800 leading-none drop-shadow-sm">
+                ProFile
               </h1>
+            </div>
+          )}
+
+          {/* Logo - Compact size when collapsed on desktop */}
+          {(collapsed && !isMobile) && (
+            <div className="flex items-center justify-center">
+              <img
+                src="/SKUS.svg"
+                alt="SKUS ProFile"
+                className="h-12 w-auto object-contain max-w-full filter brightness-110 contrast-110 saturate-150 drop-shadow-sm"
+              />
             </div>
           )}
 
