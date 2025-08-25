@@ -4,6 +4,8 @@ import { Routes, Route } from 'react-router-dom';
 // Pages
 import Members from './pages/Members';
 import Dashboard from './pages/Dashboard';
+import Events from './pages/Events';
+import Settings from './pages/Settings';
 
 // Components
 import Sidebar from './components/Sidebar';
@@ -125,7 +127,9 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/members" element={<Members />} />
-            {/* Add more routes as needed */}
+            <Route path="/events" element={<Events />} />
+            <Route path="/settings" element={<Settings />} />
+            {/* Catch-all route for undefined paths */}
             <Route path="*" element={<Dashboard />} />
           </Routes>
         </div>
