@@ -113,9 +113,11 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
   const [hoveredItem, setHoveredItem] = useState(null);
   const [hoveredProfile, setHoveredProfile] = useState(false);
   const [hoveredExpandButton, setHoveredExpandButton] = useState(false);
+  const [hoveredCloseButton, setHoveredCloseButton] = useState(false);
   const [tooltipPosition, setTooltipPosition] = useState({ top: 0, item: null });
   const [profileTooltipPosition, setProfileTooltipPosition] = useState({ top: 0 });
   const [expandButtonTooltipPosition, setExpandButtonTooltipPosition] = useState({ top: 0 });
+  const [closeButtonTooltipPosition, setCloseButtonTooltipPosition] = useState({ top: 0 });
 
   // Detect if device supports hover (not touch-only)
   const [supportsHover, setSupportsHover] = useState(true);
@@ -131,6 +133,7 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
     setHoveredProfile(false);
     setHoveredItem(null);
     setHoveredExpandButton(false);
+    setHoveredCloseButton(false);
   }, [collapsed]);
 
   /**
@@ -199,6 +202,7 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
     setHoveredProfile(false);
     setHoveredItem(null);
     setHoveredExpandButton(false);
+    setHoveredCloseButton(false);
   };
 
   /**
@@ -248,6 +252,7 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
           border-gray-200
           ${(collapsed && !isMobile) ? 'justify-center' : 'justify-between'}
           flex-shrink-0
+          relative
         `}>
           {/* Logo - Full size when expanded or on mobile */}
           {(!collapsed || isMobile) && (
@@ -266,7 +271,7 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
           {/* Logo - Compact size when collapsed on desktop */}
           {(collapsed && !isMobile) && (
             <div className="flex items-center justify-center w-full">
-              <div 
+              <div
                 className="group relative flex items-center justify-center w-12 h-12 rounded-lg hover:bg-gray-100 transition-all duration-200 cursor-pointer"
                 onClick={handleToggle}
                 onMouseEnter={(e) => {
@@ -291,22 +296,19 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
                   alt="SKUS ProFile"
                   className="h-10 w-auto object-contain filter brightness-110 contrast-110 saturate-150 drop-shadow-sm group-hover:opacity-0 transition-opacity duration-200"
                 />
-                
+
                 {/* Expand icon - visible on hover */}
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className="absolute h-6 w-6 text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                  className="absolute h-5 w-5 text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
                   aria-hidden="true"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 5l7 7-7 7M5 5l7 7-7 7"
-                  />
+                  <path d="M21.97 15V9C21.97 4 19.97 2 14.97 2H8.96997C3.96997 2 1.96997 4 1.96997 9V15C1.96997 20 3.96997 22 8.96997 22H14.97C19.97 22 21.97 20 21.97 15Z" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M14.97 2V22" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M7.96997 9.43994L10.53 11.9999L7.96997 14.5599" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
             </div>
@@ -316,7 +318,11 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
           {(!collapsed || isMobile) && (
             <button
               className="
-                p-2 
+                absolute
+                right-1
+                top-1/2
+                -translate-y-1/2
+                p-1.5
                 rounded-lg 
                 hover:bg-gray-100 
                 focus:outline-none 
@@ -328,6 +334,21 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
                 flex-shrink-0
               "
               onClick={handleToggle}
+              onMouseEnter={(e) => {
+                if (supportsHover) {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  setCloseButtonTooltipPosition({
+                    top: rect.top + (rect.height / 2),
+                    left: rect.right + 10
+                  });
+                  setHoveredCloseButton(true);
+                }
+              }}
+              onMouseLeave={() => {
+                if (supportsHover) {
+                  setHoveredCloseButton(false);
+                }
+              }}
               aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
               type="button"
             >
@@ -346,12 +367,9 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
                 stroke="currentColor"
                 aria-hidden="true"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M11 19l-7-7 7-7m8 14l-7-7 7-7"
-                />
+                <path d="M21.97 15V9C21.97 4 19.97 2 14.97 2H8.96997C3.96997 2 1.96997 4 1.96997 9V15C1.96997 20 3.96997 22 8.96997 22H14.97C19.97 22 21.97 20 21.97 15Z" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M7.96997 2V22" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M14.97 9.43994L12.41 11.9999L14.97 14.5599" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>
           )}
@@ -521,8 +539,8 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
             className={`
               absolute left-16 ml-1
               px-2 py-1
-              bg-blue-900 text-white text-xs
-              rounded border border-blue-700
+              bg-gray-900 text-white text-xs
+              rounded border border-gray-700
               transition-opacity duration-150 ease-out
               whitespace-nowrap
               -translate-y-1/2
@@ -533,7 +551,7 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
             }}
           >
             <div className="font-medium">Open Sidebar</div>
-            <div className="absolute right-full top-1/2 -translate-y-1/2 border-[3px] border-transparent border-r-blue-900"></div>
+            <div className="absolute right-full top-1/2 -translate-y-1/2 border-[3px] border-transparent border-r-gray-900"></div>
           </div>
 
           {/* User profile tooltip */}
@@ -555,6 +573,21 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
             <div className="font-medium">Admin User</div>
             <div className="absolute right-full top-1/2 -translate-y-1/2 border-[3px] border-transparent border-r-gray-900"></div>
           </div>
+        </div>
+      )}
+
+      {/* Close Button Tooltip - Shows when expanded and hovered */}
+      {!collapsed && !isMobile && supportsHover && hoveredCloseButton && (
+        <div
+          className="fixed bg-gray-900 text-white px-2 py-1 rounded border border-gray-700 text-xs font-medium z-50 pointer-events-none whitespace-nowrap shadow-lg"
+          style={{
+            top: `${closeButtonTooltipPosition.top}px`,
+            left: `${closeButtonTooltipPosition.left}px`,
+            transform: 'translateY(-50%)',
+          }}
+        >
+          Close Sidebar
+          <div className="absolute right-full top-1/2 -translate-y-1/2 border-[3px] border-transparent border-r-gray-900"></div>
         </div>
       )}
     </>
