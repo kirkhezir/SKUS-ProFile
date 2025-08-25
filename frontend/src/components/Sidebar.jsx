@@ -498,10 +498,10 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
             <div
               key={`tooltip-${item.path}`}
               className={`
-                absolute left-16 ml-2
-                px-3 py-2
-                bg-gray-900 text-white text-sm font-medium
-                rounded-md border border-gray-700
+                absolute left-16 ml-1
+                px-2 py-1
+                bg-gray-900 text-white text-xs font-medium
+                rounded border border-gray-700
                 transition-opacity duration-150 ease-out
                 whitespace-nowrap
                 -translate-y-1/2
@@ -512,17 +512,17 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
               }}
             >
               {item.label}
-              <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900"></div>
+              <div className="absolute right-full top-1/2 -translate-y-1/2 border-[3px] border-transparent border-r-gray-900"></div>
             </div>
           ))}
 
           {/* Sidebar expand tooltip */}
           <div
             className={`
-              absolute left-16 ml-2
-              px-3 py-2
-              bg-blue-900 text-white text-sm
-              rounded-md border border-blue-700
+              absolute left-16 ml-1
+              px-2 py-1
+              bg-blue-900 text-white text-xs
+              rounded border border-blue-700
               transition-opacity duration-150 ease-out
               whitespace-nowrap
               -translate-y-1/2
@@ -533,7 +533,7 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
             }}
           >
             <div className="font-medium">Open Sidebar</div>
-            <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-blue-900"></div>
+            <div className="absolute right-full top-1/2 -translate-y-1/2 border-[3px] border-transparent border-r-blue-900"></div>
           </div>
 
           {/* User profile tooltip */}
@@ -553,7 +553,7 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
             }}
           >
             <div className="font-medium">Admin User</div>
-            <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900"></div>
+            <div className="absolute right-full top-1/2 -translate-y-1/2 border-[3px] border-transparent border-r-gray-900"></div>
           </div>
         </div>
       )}
