@@ -112,8 +112,10 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
   // Tooltip state
   const [hoveredItem, setHoveredItem] = useState(null);
   const [hoveredProfile, setHoveredProfile] = useState(false);
+  const [hoveredExpandButton, setHoveredExpandButton] = useState(false);
   const [tooltipPosition, setTooltipPosition] = useState({ top: 0, item: null });
   const [profileTooltipPosition, setProfileTooltipPosition] = useState({ top: 0 });
+  const [expandButtonTooltipPosition, setExpandButtonTooltipPosition] = useState({ top: 0 });
 
   // Detect if device supports hover (not touch-only)
   const [supportsHover, setSupportsHover] = useState(true);
@@ -123,6 +125,13 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
     const hasHover = window.matchMedia('(hover: hover)').matches;
     setSupportsHover(hasHover);
   }, []);
+
+  useEffect(() => {
+    // Clear tooltip states when sidebar collapsed state changes
+    setHoveredProfile(false);
+    setHoveredItem(null);
+    setHoveredExpandButton(false);
+  }, [collapsed]);
 
   /**
    * Check if a navigation path is currently active
@@ -186,6 +195,10 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
    */
   const handleToggle = () => {
     setCollapsed(!collapsed);
+    // Clear tooltip states when toggling
+    setHoveredProfile(false);
+    setHoveredItem(null);
+    setHoveredExpandButton(false);
   };
 
   /**
@@ -252,55 +265,96 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
 
           {/* Logo - Compact size when collapsed on desktop */}
           {(collapsed && !isMobile) && (
-            <div className="flex items-center justify-center">
-              <img
-                src="/SKUS.svg"
-                alt="SKUS ProFile"
-                className="h-12 w-auto object-contain max-w-full filter brightness-110 contrast-110 saturate-150 drop-shadow-sm"
-              />
+            <div className="flex items-center justify-center w-full">
+              <div 
+                className="group relative flex items-center justify-center w-12 h-12 rounded-lg hover:bg-gray-100 transition-all duration-200 cursor-pointer"
+                onClick={handleToggle}
+                onMouseEnter={(e) => {
+                  if (supportsHover) {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    setExpandButtonTooltipPosition({
+                      top: rect.top + (rect.height / 2)
+                    });
+                    setHoveredExpandButton(true);
+                  }
+                }}
+                onMouseLeave={() => {
+                  if (supportsHover) {
+                    setHoveredExpandButton(false);
+                  }
+                }}
+                aria-label="Expand sidebar"
+              >
+                {/* Logo - visible by default */}
+                <img
+                  src="/SKUS.svg"
+                  alt="SKUS ProFile"
+                  className="h-10 w-auto object-contain filter brightness-110 contrast-110 saturate-150 drop-shadow-sm group-hover:opacity-0 transition-opacity duration-200"
+                />
+                
+                {/* Expand icon - visible on hover */}
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="absolute h-6 w-6 text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 5l7 7-7 7M5 5l7 7-7 7"
+                  />
+                </svg>
+              </div>
             </div>
           )}
 
-          <button
-            className="
-              p-2 
-              rounded-lg 
-              hover:bg-gray-100 
-              focus:outline-none 
-              focus:ring-2 
-              focus:ring-blue-500 
-              focus:ring-offset-2
-              transition-colors
-              duration-200
-              flex-shrink-0
-            "
-            onClick={handleToggle}
-            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            type="button"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className={`
-                h-5 
-                w-5 
-                text-gray-600 
-                transition-transform 
-                duration-200 
-                ${collapsed ? 'rotate-180' : ''}
-              `}
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              aria-hidden="true"
+          {/* Toggle button - only visible when expanded */}
+          {(!collapsed || isMobile) && (
+            <button
+              className="
+                p-2 
+                rounded-lg 
+                hover:bg-gray-100 
+                focus:outline-none 
+                focus:ring-2 
+                focus:ring-blue-500 
+                focus:ring-offset-2
+                transition-colors
+                duration-200
+                flex-shrink-0
+              "
+              onClick={handleToggle}
+              aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              type="button"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M11 19l-7-7 7-7m8 14l-7-7 7-7"
-              />
-            </svg>
-          </button>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className={`
+                  h-5 
+                  w-5 
+                  text-gray-600 
+                  transition-transform 
+                  duration-200 
+                  ${collapsed ? 'rotate-180' : ''}
+                `}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M11 19l-7-7 7-7m8 14l-7-7 7-7"
+                />
+              </svg>
+            </button>
+          )}
         </header>
 
         {/* Navigation */}
@@ -462,13 +516,33 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
             </div>
           ))}
 
-          {/* User profile tooltip */}
+          {/* Sidebar expand tooltip */}
           <div
             className={`
               absolute left-16 ml-2
               px-3 py-2
               bg-blue-900 text-white text-sm
               rounded-md border border-blue-700
+              transition-opacity duration-150 ease-out
+              whitespace-nowrap
+              -translate-y-1/2
+              ${hoveredExpandButton ? 'opacity-100 visible' : 'opacity-0 invisible'}
+            `}
+            style={{
+              top: `${expandButtonTooltipPosition.top}px`,
+            }}
+          >
+            <div className="font-medium">Open Sidebar</div>
+            <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-blue-900"></div>
+          </div>
+
+          {/* User profile tooltip */}
+          <div
+            className={`
+              absolute left-16 ml-2
+              px-3 py-2
+              bg-gray-900 text-white text-sm
+              rounded-md border border-gray-700
               transition-opacity duration-150 ease-out
               whitespace-nowrap
               -translate-y-1/2
@@ -479,7 +553,7 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
             }}
           >
             <div className="font-medium">Admin User</div>
-            <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-blue-900"></div>
+            <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900"></div>
           </div>
         </div>
       )}
