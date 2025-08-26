@@ -102,10 +102,10 @@ export default function App() {
           }
         `}
       >
-        {/* Mobile/Tablet Header - Minimal navigation only */}
+        {/* Mobile/Tablet Header - Clean and minimal */}
         {(isMobile || window.innerWidth < 1024) && sidebarCollapsed && (
-          <header className="bg-white border-b border-gray-200 px-4 py-2.5 flex items-center justify-between lg:hidden z-10 sticky top-0 shadow-sm">
-            <div className="flex items-center">
+          <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between lg:hidden z-10 sticky top-0">
+            <div className="flex items-center space-x-3">
               <button
                 onClick={() => setSidebarCollapsed(false)}
                 className="
@@ -119,7 +119,6 @@ export default function App() {
                   transition-colors
                   duration-200
                   flex-shrink-0
-                  -ml-1
                 "
                 aria-label="Open navigation menu"
               >
@@ -138,24 +137,23 @@ export default function App() {
                   />
                 </svg>
               </button>
-              {/* Page title - dynamic based on current route */}
-              <h1 className="ml-2 text-lg font-semibold text-gray-900 truncate">
-                {location.pathname === '/' ? 'Dashboard' :
-                  location.pathname === '/members' ? 'Members' :
-                    location.pathname === '/events' ? 'Events' :
-                      location.pathname === '/settings' ? 'Settings' :
-                        'Dashboard'}
-              </h1>
+
+              {/* App branding - minimal */}
+              <div className="flex items-center space-x-2">
+                <img
+                  src="/SKUS.svg"
+                  alt="SKUS"
+                  className="h-8 w-auto object-contain filter brightness-110 contrast-110 saturate-150"
+                />
+                <span className="text-lg font-semibold text-gray-900">ProFile</span>
+              </div>
             </div>
 
-            {/* Mobile user profile */}
-            <button className="flex items-center space-x-2 p-1 rounded-lg hover:bg-gray-100 transition-colors duration-200">
-              <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold flex-shrink-0 text-sm">
+            {/* Mobile user profile - simplified */}
+            <button className="p-1 rounded-full hover:bg-gray-100 transition-colors duration-200" aria-label="User menu">
+              <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold text-sm">
                 A
               </div>
-              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
             </button>
           </header>
         )}
