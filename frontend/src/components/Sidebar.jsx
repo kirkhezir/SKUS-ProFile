@@ -109,6 +109,10 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
   const location = useLocation();
   const sidebarRef = useRef(null);
 
+  // Responsive state
+  const [isTablet, setIsTablet] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
+
   // Tooltip state
   const [hoveredItem, setHoveredItem] = useState(null);
   const [hoveredProfile, setHoveredProfile] = useState(false);
@@ -123,9 +127,19 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
   const [supportsHover, setSupportsHover] = useState(true);
 
   useEffect(() => {
-    // Check if device supports hover
+    // Check if device supports hover and set responsive states
     const hasHover = window.matchMedia('(hover: hover)').matches;
     setSupportsHover(hasHover);
+
+    const handleResize = () => {
+      const width = window.innerWidth;
+      setIsTablet(width >= 640 && width < 1024);
+      setIsDesktop(width >= 1024);
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   useEffect(() => {
@@ -232,44 +246,53 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
           border-r 
           border-gray-200 
           shadow-lg
+          sidebar-container
+          ${isMobile ? 'sidebar-mobile' : ''}
+          ${isTablet ? 'sidebar-tablet-landscape' : ''}
+          custom-scrollbar
           ${isMobile
-            ? `w-64 ${collapsed ? '-translate-x-full' : 'translate-x-0'} z-40`
-            : collapsed
-              ? 'w-16 translate-x-0 z-30'
-              : 'w-64 translate-x-0 z-30'
+            ? `w-72 sm:w-80 ${collapsed ? '-translate-x-full' : 'translate-x-0'} z-40`
+            : isTablet
+              ? `w-72 ${collapsed ? '-translate-x-full lg:translate-x-0 lg:w-16' : 'translate-x-0'} z-40 lg:z-30`
+              : collapsed
+                ? 'w-16 translate-x-0 z-30'
+                : 'w-64 translate-x-0 z-30'
           }
+          ${!isDesktop ? 'safe-area-inset-left' : ''}
         `}
         role="navigation"
         aria-label="Main navigation"
+        aria-hidden={collapsed && (isMobile || isTablet)}
       >
         {/* Header */}
         <header className={`
           flex 
           items-center 
           h-16 
-          ${collapsed && !isMobile ? 'px-2' : 'px-4'}
+          ${collapsed && isDesktop ? 'px-2' : 'px-4'}
           border-b 
           border-gray-200
-          ${(collapsed && !isMobile) ? 'justify-center' : 'justify-between'}
+          ${(collapsed && isDesktop) ? 'justify-center' : 'justify-between'}
           flex-shrink-0
           relative
+          ${!isDesktop ? 'safe-area-inset-top' : ''}
         `}>
-          {/* Logo - Full size when expanded or on mobile */}
-          {(!collapsed || isMobile) && (
-            <div className="flex items-center justify-center space-x-3">
+          {/* Logo - Full size when expanded or on mobile/tablet */}
+          {(!collapsed || !isDesktop) && (
+            <div className="flex items-center justify-center space-x-3 min-w-0">
               <img
                 src="/SKUS.svg"
                 alt="SKUS"
-                className="h-12 w-auto object-contain filter brightness-110 contrast-110 saturate-150 drop-shadow-sm"
+                className="h-10 sm:h-12 w-auto object-contain filter brightness-110 contrast-110 saturate-150 drop-shadow-sm flex-shrink-0 sidebar-logo"
               />
-              <h1 className="text-2xl font-bold text-gray-800 leading-none drop-shadow-sm">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-800 leading-none drop-shadow-sm truncate">
                 ProFile
               </h1>
             </div>
           )}
 
           {/* Logo - Compact size when collapsed on desktop */}
-          {(collapsed && !isMobile) && (
+          {(collapsed && isDesktop) && (
             <div className="flex items-center justify-center w-full">
               <div
                 className="group relative flex items-center justify-center w-12 h-12 rounded-lg hover:bg-gray-100 transition-all duration-200 cursor-pointer"
@@ -314,8 +337,8 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
             </div>
           )}
 
-          {/* Toggle button - only visible when expanded */}
-          {(!collapsed || isMobile) && (
+          {/* Toggle button - visible when expanded or on mobile/tablet */}
+          {(!collapsed || !isDesktop) && (
             <button
               className="
                 absolute
@@ -332,6 +355,7 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
                 transition-colors
                 duration-200
                 flex-shrink-0
+                touch-manipulation
               "
               onClick={handleToggle}
               onMouseEnter={(e) => {
@@ -379,15 +403,19 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
         <nav className={`
           flex-1 overflow-y-auto py-4 min-h-0
           ${isMobile ? 'max-h-[calc(100dvh-8rem)]' : ''}
+          ${!isDesktop ? 'safe-area-inset-bottom' : ''}
+          navigation
+          custom-scrollbar
+          smooth-scroll
         `} role="menubar">
-          <ul className={`space-y-1 ${collapsed && !isMobile ? 'px-1' : 'px-3'}`} role="none">
+          <ul className={`space-y-1 ${collapsed && isDesktop ? 'px-1' : 'px-3'}`} role="none">
             {navigationItems.map((item) => (
               <li key={item.path} role="none">
                 <Link
                   to={item.path}
                   onClick={handleNavClick}
                   onMouseEnter={(e) => {
-                    if (collapsed && !isMobile && supportsHover) {
+                    if (collapsed && isDesktop && supportsHover) {
                       const rect = e.currentTarget.getBoundingClientRect();
                       setTooltipPosition({
                         top: rect.top + (rect.height / 2),
@@ -406,7 +434,7 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
                     relative 
                     flex 
                     items-center 
-                    ${collapsed && !isMobile ? 'justify-center p-2 mx-1' : 'px-3 py-2.5'} 
+                    ${collapsed && isDesktop ? 'justify-center p-3 mx-1' : 'px-4 py-3'} 
                     rounded-lg 
                     transition-all
                     duration-200 
@@ -414,25 +442,27 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
                     focus:ring-2 
                     focus:ring-blue-500 
                     focus:ring-offset-1
+                    touch-manipulation
+                    min-h-[44px]
                     ${isActive(item.path)
                       ? 'bg-blue-50 text-blue-700 shadow-sm'
                       : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
                     }
-                    ${collapsed && !isMobile ? 'w-10 h-10' : ''}
+                    ${collapsed && isDesktop ? 'w-12 h-12' : ''}
                   `}
                   role="menuitem"
                   aria-current={isActive(item.path) ? 'page' : undefined}
                 >
                   <div className={`
                     flex-shrink-0
-                    ${collapsed && !isMobile ? 'flex items-center justify-center' : ''}
+                    ${collapsed && isDesktop ? 'flex items-center justify-center' : ''}
                     ${isActive(item.path) ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'}
                   `}>
                     {item.icon}
                   </div>
 
-                  {(!collapsed || isMobile) && (
-                    <span className="ml-3 font-medium truncate">
+                  {(!collapsed || !isDesktop) && (
+                    <span className="ml-3 font-medium truncate text-sm sm:text-base">
                       {item.label}
                     </span>
                   )}
@@ -446,20 +476,20 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
         <footer className={`
           border-t 
           border-gray-200 
-          ${collapsed && !isMobile ? 'p-2' : 'p-4'}
-          ${(collapsed && !isMobile) ? 'flex items-center justify-center' : ''}
+          ${collapsed && isDesktop ? 'p-2' : 'p-4'}
+          ${(collapsed && isDesktop) ? 'flex items-center justify-center' : ''}
           flex-shrink-0
-          ${isMobile ? 'min-h-[4rem]' : ''}
+          ${!isDesktop ? 'min-h-[4rem] safe-area-inset-bottom' : ''}
         `}>
           <div
             className={`
-              ${collapsed && !isMobile
-                ? 'group relative flex items-center justify-center w-10 h-10 rounded-lg hover:bg-gray-100 transition-all duration-200 cursor-pointer'
+              ${collapsed && isDesktop
+                ? 'group relative flex items-center justify-center w-12 h-12 rounded-lg hover:bg-gray-100 transition-all duration-200 cursor-pointer'
                 : 'flex items-center space-x-3'
               }
             `}
             onMouseEnter={(e) => {
-              if (collapsed && !isMobile && supportsHover) {
+              if (collapsed && isDesktop && supportsHover) {
                 const rect = e.currentTarget.getBoundingClientRect();
                 setProfileTooltipPosition({
                   top: rect.top + (rect.height / 2)
@@ -475,7 +505,7 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
           >
             <div
               className={`
-                ${collapsed && !isMobile ? 'w-6 h-6' : 'w-8 h-8'}
+                ${collapsed && isDesktop ? 'w-6 h-6' : 'w-8 h-8 sm:w-10 sm:h-10'}
                 rounded-full 
                 bg-blue-500 
                 flex 
@@ -486,7 +516,8 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
                 flex-shrink-0
                 transition-all
                 duration-200
-                ${collapsed && !isMobile ? 'group-hover:bg-blue-600' : ''}
+                ${collapsed && isDesktop ? 'group-hover:bg-blue-600' : ''}
+                text-sm sm:text-base
               `}
               role="img"
               aria-label="Admin user avatar"
@@ -494,12 +525,12 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
               A
             </div>
 
-            {(!collapsed || isMobile) && (
+            {(!collapsed || !isDesktop) && (
               <div className="flex-1 min-w-0">
-                <h3 className="text-sm font-semibold text-gray-700 truncate">
+                <h3 className="text-sm sm:text-base font-semibold text-gray-700 truncate">
                   Admin User
                 </h3>
-                <p className="text-xs text-gray-500 truncate">
+                <p className="text-xs sm:text-sm text-gray-500 truncate">
                   admin@memberhub.com
                 </p>
               </div>
@@ -509,7 +540,7 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
       </aside>
 
       {/* Tooltips Portal - Rendered outside sidebar to avoid overflow */}
-      {collapsed && !isMobile && supportsHover && (
+      {collapsed && isDesktop && supportsHover && (
         <div className="fixed pointer-events-none z-50">
           {/* Navigation tooltips */}
           {navigationItems.map((item) => (
@@ -523,6 +554,7 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
                 transition-opacity duration-150 ease-out
                 whitespace-nowrap
                 -translate-y-1/2
+                shadow-lg
                 ${hoveredItem === item.path && tooltipPosition.item === item.path ? 'opacity-100 visible' : 'opacity-0 invisible'}
               `}
               style={{
@@ -544,6 +576,7 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
               transition-opacity duration-150 ease-out
               whitespace-nowrap
               -translate-y-1/2
+              shadow-lg
               ${hoveredExpandButton ? 'opacity-100 visible' : 'opacity-0 invisible'}
             `}
             style={{
@@ -564,6 +597,7 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
               transition-opacity duration-150 ease-out
               whitespace-nowrap
               -translate-y-1/2
+              shadow-lg
               ${hoveredProfile ? 'opacity-100 visible' : 'opacity-0 invisible'}
             `}
             style={{
@@ -577,7 +611,7 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
       )}
 
       {/* Close Button Tooltip - Shows when expanded and hovered */}
-      {!collapsed && !isMobile && supportsHover && hoveredCloseButton && (
+      {!collapsed && isDesktop && supportsHover && hoveredCloseButton && (
         <div
           className="fixed bg-gray-900 text-white px-2 py-1 rounded border border-gray-700 text-xs font-medium z-50 pointer-events-none whitespace-nowrap shadow-lg"
           style={{

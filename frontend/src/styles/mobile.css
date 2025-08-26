@@ -1,0 +1,95 @@
+/* Mobile-specific styles and improvements */
+
+/* iOS Safari specific styles */
+@supports (-webkit-touch-callout: none) {
+  .sidebar-mobile {
+    /* Improve scrolling performance on iOS */
+    overscroll-behavior: contain;
+  }
+  
+  .sidebar-mobile .navigation {
+    /* Improve scrolling performance on iOS */
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+  }
+}
+
+/* High DPI display improvements */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .sidebar-logo {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-container,
+  .sidebar-overlay,
+  .tooltip {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* Tablet landscape specific */
+@media (min-width: 768px) and (max-width: 1023px) and (orientation: landscape) {
+  .sidebar-tablet-landscape {
+    /* Specific styles for tablet landscape */
+    width: 240px; /* Slightly narrower for landscape */
+  }
+}
+
+/* Focus visible for better keyboard navigation */
+.focus-visible-ring:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+  border-radius: 0.375rem;
+}
+
+/* Custom scrollbar for webkit browsers */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.5);
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(156, 163, 175, 0.7);
+}
+
+/* Better touch targets for small screens */
+@media (max-width: 640px) {
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Prevent text selection on touch devices */
+.no-select {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Smooth scrolling for navigation */
+.smooth-scroll {
+  scroll-behavior: smooth;
+}
+
+/* Better backdrop blur support */
+@supports (backdrop-filter: blur(10px)) {
+  .backdrop-blur-enhanced {
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+  }
+}

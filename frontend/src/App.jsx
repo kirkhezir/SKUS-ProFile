@@ -15,22 +15,43 @@ import Sidebar from './components/Sidebar';
  * Handles routing and global layout state
  */
 export default function App() {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    // Initialize from localStorage or default to false for desktop
+    const saved = localStorage.getItem('sidebarCollapsed');
+    return saved ? JSON.parse(saved) : false;
+  });
   const [isMobile, setIsMobile] = useState(false);
 
-  // Handle responsive behavior
+  // Save sidebar state to localStorage when it changes
+  useEffect(() => {
+    // Only save preference on desktop to avoid mobile states being persisted
+    if (window.innerWidth >= 1024) {
+      localStorage.setItem('sidebarCollapsed', JSON.stringify(sidebarCollapsed));
+    }
+  }, [sidebarCollapsed]);
+
+  // Handle responsive behavior with better breakpoints
   useEffect(() => {
     const handleResize = () => {
-      const mobile = window.innerWidth < 768;
-      const tablet = window.innerWidth >= 768 && window.innerWidth < 1024;
+      const mobile = window.innerWidth < 640; // sm breakpoint
+      const tablet = window.innerWidth >= 640 && window.innerWidth < 1024; // lg breakpoint
+      const isSmallScreen = window.innerWidth < 1024;
+      
       setIsMobile(mobile);
 
-      // Auto-collapse sidebar on mobile and small tablets
+      // Auto-collapse sidebar on mobile and tablets for better UX
       if (mobile) {
         setSidebarCollapsed(true);
       } else if (tablet) {
-        // On tablets, start with collapsed sidebar to give more space
+        // On tablets, start with collapsed sidebar to maximize content space
         setSidebarCollapsed(true);
+      } else {
+        // On desktop, default to expanded but respect user preference
+        // Only auto-expand if user hasn't manually collapsed
+        const userCollapsedPreference = localStorage.getItem('sidebarCollapsed');
+        if (userCollapsedPreference === null) {
+          setSidebarCollapsed(false);
+        }
       }
     };
 
@@ -53,11 +74,12 @@ export default function App() {
         isMobile={isMobile}
       />
 
-      {/* Mobile overlay */}
-      {isMobile && !sidebarCollapsed && (
+      {/* Mobile/Tablet overlay */}
+      {(isMobile || window.innerWidth < 1024) && !sidebarCollapsed && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-20 md:hidden"
+          className="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden"
           onClick={() => setSidebarCollapsed(true)}
+          onTouchStart={() => setSidebarCollapsed(true)}
           aria-label="Close sidebar"
         />
       )}
@@ -72,16 +94,17 @@ export default function App() {
           overflow-auto
           flex
           flex-col
+          min-h-screen
           ${sidebarCollapsed
-            ? 'ml-0 md:ml-16'
-            : 'ml-0 md:ml-64'
+            ? 'ml-0 sm:ml-0 lg:ml-16'
+            : 'ml-0 sm:ml-0 lg:ml-64'
           }
         `}
       >
-        {/* Mobile Header */}
-        {isMobile && sidebarCollapsed && (
-          <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between md:hidden z-10">
-            <div className="flex items-center">
+        {/* Mobile/Tablet Header */}
+        {(isMobile || window.innerWidth < 1024) && sidebarCollapsed && (
+          <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between lg:hidden z-10 sticky top-0">
+            <div className="flex items-center min-w-0 flex-1">
               <button
                 onClick={() => setSidebarCollapsed(false)}
                 className="
@@ -95,6 +118,7 @@ export default function App() {
                   transition-colors
                   duration-200
                   mr-3
+                  flex-shrink-0
                 "
                 aria-label="Open sidebar menu"
               >
@@ -113,11 +137,18 @@ export default function App() {
                   />
                 </svg>
               </button>
-              <h1 className="text-lg font-semibold text-gray-900">SKUS ProFile</h1>
+              <div className="flex items-center space-x-2 min-w-0">
+                <img
+                  src="/SKUS.svg"
+                  alt="SKUS"
+                  className="h-8 w-auto object-contain filter brightness-110 contrast-110 saturate-150 flex-shrink-0"
+                />
+                <h1 className="text-lg font-semibold text-gray-900 truncate">SKUS ProFile</h1>
+              </div>
             </div>
 
             {/* Mobile user avatar */}
-            <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold">
+            <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold flex-shrink-0">
               A
             </div>
           </header>
