@@ -268,7 +268,7 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
         <header className={`
           flex 
           items-center 
-          h-16 
+          ${!isDesktop ? 'h-14' : 'h-16'}
           ${collapsed && isDesktop ? 'px-2' : 'px-4'}
           border-b 
           border-gray-200
@@ -283,9 +283,9 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
               <img
                 src="/SKUS.svg"
                 alt="SKUS"
-                className="h-10 sm:h-12 w-auto object-contain filter brightness-110 contrast-110 saturate-150 drop-shadow-sm flex-shrink-0 sidebar-logo"
+                className="h-8 sm:h-10 w-auto object-contain filter brightness-110 contrast-110 saturate-150 drop-shadow-sm flex-shrink-0 sidebar-logo"
               />
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-800 leading-none drop-shadow-sm truncate">
+              <h1 className="text-lg sm:text-xl font-bold text-gray-800 leading-none drop-shadow-sm truncate">
                 ProFile
               </h1>
             </div>
@@ -402,7 +402,7 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
         {/* Navigation */}
         <nav className={`
           flex-1 overflow-y-auto py-4 min-h-0
-          ${isMobile ? 'max-h-[calc(100dvh-8rem)]' : ''}
+          ${isMobile ? 'max-h-[calc(100dvh-7rem)]' : isTablet ? 'max-h-[calc(100dvh-7.5rem)]' : ''}
           ${!isDesktop ? 'safe-area-inset-bottom' : ''}
           navigation
           custom-scrollbar

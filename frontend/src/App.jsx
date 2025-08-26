@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 
 // Pages
 import Members from './pages/Members';
@@ -15,6 +15,7 @@ import Sidebar from './components/Sidebar';
  * Handles routing and global layout state
  */
 export default function App() {
+  const location = useLocation();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     // Initialize from localStorage or default to false for desktop
     const saved = localStorage.getItem('sidebarCollapsed');
@@ -101,10 +102,10 @@ export default function App() {
           }
         `}
       >
-        {/* Mobile/Tablet Header */}
+        {/* Mobile/Tablet Header - Minimal navigation only */}
         {(isMobile || window.innerWidth < 1024) && sidebarCollapsed && (
-          <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between lg:hidden z-10 sticky top-0">
-            <div className="flex items-center min-w-0 flex-1">
+          <header className="bg-white border-b border-gray-200 px-4 py-2.5 flex items-center justify-between lg:hidden z-10 sticky top-0 shadow-sm">
+            <div className="flex items-center">
               <button
                 onClick={() => setSidebarCollapsed(false)}
                 className="
@@ -117,10 +118,10 @@ export default function App() {
                   focus:ring-offset-2
                   transition-colors
                   duration-200
-                  mr-3
                   flex-shrink-0
+                  -ml-1
                 "
-                aria-label="Open sidebar menu"
+                aria-label="Open navigation menu"
               >
                 <svg
                   className="w-6 h-6 text-gray-600"
@@ -137,20 +138,25 @@ export default function App() {
                   />
                 </svg>
               </button>
-              <div className="flex items-center space-x-2 min-w-0">
-                <img
-                  src="/SKUS.svg"
-                  alt="SKUS"
-                  className="h-8 w-auto object-contain filter brightness-110 contrast-110 saturate-150 flex-shrink-0"
-                />
-                <h1 className="text-lg font-semibold text-gray-900 truncate">SKUS ProFile</h1>
-              </div>
+              {/* Page title - dynamic based on current route */}
+              <h1 className="ml-2 text-lg font-semibold text-gray-900 truncate">
+                {location.pathname === '/' ? 'Dashboard' :
+                 location.pathname === '/members' ? 'Members' :
+                 location.pathname === '/events' ? 'Events' :
+                 location.pathname === '/settings' ? 'Settings' :
+                 'Dashboard'}
+              </h1>
             </div>
 
-            {/* Mobile user avatar */}
-            <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold flex-shrink-0">
-              A
-            </div>
+            {/* Mobile user profile */}
+            <button className="flex items-center space-x-2 p-1 rounded-lg hover:bg-gray-100 transition-colors duration-200">
+              <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold flex-shrink-0 text-sm">
+                A
+              </div>
+              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
           </header>
         )}
 
