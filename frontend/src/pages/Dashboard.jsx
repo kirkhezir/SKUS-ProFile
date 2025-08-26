@@ -359,11 +359,42 @@ export default function Dashboard() {
                 </p>
               </div>
               {!loading && (
-                <div className="flex items-center space-x-4">
-                  <div className="text-right">
-                    <div className="text-2xl font-bold text-gray-900">{totalMembers}</div>
-                    <div className="text-xs text-gray-500 uppercase tracking-wide">Total Members</div>
-                  </div>
+                <div className="flex items-center space-x-3">
+                  <button
+                    onClick={() => {
+                      const csv = [
+                        ['Name', 'Church', 'Gender', 'Email', 'Contributions'],
+                        ...members.map(m => [
+                          `${m.first_name} ${m.last_name}`,
+                          m.church,
+                          m.gender,
+                          m.email,
+                          m.contributions || 0
+                        ])
+                      ].map(row => row.join(',')).join('\n');
+                      const blob = new Blob([csv], { type: 'text/csv' });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = 'member-report.csv';
+                      a.click();
+                      URL.revokeObjectURL(url);
+                    }}
+                    className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+                  >
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <span className="hidden sm:inline">Export</span>
+                  </button>
+
+                  <button className="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-lg text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    <span className="hidden sm:inline">Add Member</span>
+                    <span className="sm:hidden">Add</span>
+                  </button>
                 </div>
               )}
             </div>
@@ -393,11 +424,28 @@ export default function Dashboard() {
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-all duration-200">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
+                    <h3 className="text-sm font-medium text-gray-500 mb-2">Total Members</h3>
+                    <div className="text-2xl font-bold text-gray-900 mb-2">{totalMembers}</div>
+                    <div className="text-sm text-gray-600">
+                      Registered community members
+                    </div>
+                  </div>
+                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-all duration-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
                     <h3 className="text-sm font-medium text-gray-500 mb-2">Active Members</h3>
                     <div className="text-2xl font-bold text-gray-900 mb-2">{activeMembersCount}</div>
                     <div className="flex items-center text-sm">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${engagementScore >= 70 ? 'bg-green-100 text-green-800' :
-                          engagementScore >= 50 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
+                        engagementScore >= 50 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
                         }`}>
                         {engagementScore}% engaged
                       </span>
@@ -424,26 +472,9 @@ export default function Dashboard() {
                       +{newMembersThisMonth.length} new members
                     </div>
                   </div>
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-all duration-200">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <h3 className="text-sm font-medium text-gray-500 mb-2">Total Churches</h3>
-                    <div className="text-2xl font-bold text-gray-900 mb-2">{CHURCHES.length}</div>
-                    <div className="text-sm text-gray-600">
-                      Active locations
-                    </div>
-                  </div>
                   <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                     </svg>
                   </div>
                 </div>
@@ -619,8 +650,8 @@ export default function Dashboard() {
                         </div>
                         <div className="flex items-center">
                           <span className={`px-2 py-1 rounded-full text-xs font-bold ${church.engagementRate >= 70 ? 'bg-green-100 text-green-800' :
-                              church.engagementRate >= 50 ? 'bg-yellow-100 text-yellow-800' :
-                                'bg-red-100 text-red-800'
+                            church.engagementRate >= 50 ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-red-100 text-red-800'
                             }`}>
                             {church.engagementRate}%
                           </span>
@@ -823,75 +854,38 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Quick Actions */}
+            {/* Administrative Actions */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-semibold text-gray-900">Quick Actions</h2>
+                <h2 className="text-lg font-semibold text-gray-900">Administrative Tools</h2>
                 <div className="text-sm text-gray-500">
-                  Common tasks
+                  Management actions
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <button className="group flex flex-col items-center p-6 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white transition-all duration-200 shadow-sm hover:shadow-md transform hover:-translate-y-0.5">
-                  <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center mb-3 group-hover:bg-white/30 transition-colors">
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                  </div>
-                  <span className="font-semibold text-sm">Add Member</span>
-                  <span className="text-xs text-blue-100 mt-1">Register new member</span>
-                </button>
-
-                <button
-                  className="group flex flex-col items-center p-6 rounded-xl bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white transition-all duration-200 shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
-                  onClick={() => {
-                    const csv = [
-                      ['Name', 'Church', 'Gender', 'Email', 'Contributions'],
-                      ...members.map(m => [
-                        `${m.first_name} ${m.last_name}`,
-                        m.church,
-                        m.gender,
-                        m.email,
-                        m.contributions || 0
-                      ])
-                    ].map(row => row.join(',')).join('\n');
-                    const blob = new Blob([csv], { type: 'text/csv' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = 'member-report.csv';
-                    a.click();
-                    URL.revokeObjectURL(url);
-                  }}
-                >
-                  <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center mb-3 group-hover:bg-white/30 transition-colors">
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                  </div>
-                  <span className="font-semibold text-sm">Export Data</span>
-                  <span className="text-xs text-green-100 mt-1">Download CSV report</span>
-                </button>
-
-                <button className="group flex flex-col items-center p-6 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white transition-all duration-200 shadow-sm hover:shadow-md transform hover:-translate-y-0.5">
-                  <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center mb-3 group-hover:bg-white/30 transition-colors">
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <button className="group flex items-center p-4 rounded-lg border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all duration-200">
+                  <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-4 group-hover:bg-purple-200 transition-colors">
+                    <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zM4 13v6a1 1 0 001 1h6M4 5v6a1 1 0 001 1h6M20 3a1 1 0 011 1v6M10 3h6a1 1 0 011 1v6" />
                     </svg>
                   </div>
-                  <span className="font-semibold text-sm">Send Notifications</span>
-                  <span className="text-xs text-purple-100 mt-1">Bulk messaging</span>
+                  <div className="text-left">
+                    <h3 className="font-medium text-gray-900 group-hover:text-purple-900">Send Notifications</h3>
+                    <p className="text-sm text-gray-500 mt-1">Bulk messaging to members</p>
+                  </div>
                 </button>
 
-                <button className="group flex flex-col items-center p-6 rounded-xl bg-gradient-to-br from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white transition-all duration-200 shadow-sm hover:shadow-md transform hover:-translate-y-0.5">
-                  <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center mb-3 group-hover:bg-white/30 transition-colors">
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <button className="group flex items-center p-4 rounded-lg border border-gray-200 hover:border-yellow-300 hover:bg-yellow-50 transition-all duration-200">
+                  <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center mr-4 group-hover:bg-yellow-200 transition-colors">
+                    <svg className="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                   </div>
-                  <span className="font-semibold text-sm">Schedule Event</span>
-                  <span className="text-xs text-yellow-100 mt-1">Plan activities</span>
+                  <div className="text-left">
+                    <h3 className="font-medium text-gray-900 group-hover:text-yellow-900">Schedule Event</h3>
+                    <p className="text-sm text-gray-500 mt-1">Plan community activities</p>
+                  </div>
                 </button>
               </div>
             </div>
