@@ -37,7 +37,7 @@ export default function App() {
       const mobile = window.innerWidth < 640; // sm breakpoint
       const tablet = window.innerWidth >= 640 && window.innerWidth < 1024; // lg breakpoint
       const isSmallScreen = window.innerWidth < 1024;
-      
+
       setIsMobile(mobile);
 
       // Auto-collapse sidebar on mobile and tablets for better UX
@@ -141,10 +141,10 @@ export default function App() {
               {/* Page title - dynamic based on current route */}
               <h1 className="ml-2 text-lg font-semibold text-gray-900 truncate">
                 {location.pathname === '/' ? 'Dashboard' :
-                 location.pathname === '/members' ? 'Members' :
-                 location.pathname === '/events' ? 'Events' :
-                 location.pathname === '/settings' ? 'Settings' :
-                 'Dashboard'}
+                  location.pathname === '/members' ? 'Members' :
+                    location.pathname === '/events' ? 'Events' :
+                      location.pathname === '/settings' ? 'Settings' :
+                        'Dashboard'}
               </h1>
             </div>
 

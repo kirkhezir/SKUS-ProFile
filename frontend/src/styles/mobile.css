@@ -2,11 +2,13 @@
 
 /* iOS Safari specific styles */
 @supports (-webkit-touch-callout: none) {
-  .sidebar-mobile {
-    /* Improve scrolling performance on iOS */
-    overscroll-behavior: contain;
+  /* Feature detection for overscroll-behavior support */
+  @supports (overscroll-behavior: contain) {
+    .sidebar-mobile {
+      overscroll-behavior: contain;
+    }
   }
-  
+
   .sidebar-mobile .navigation {
     /* Improve scrolling performance on iOS */
     -webkit-transform: translateZ(0);
@@ -17,8 +19,16 @@
 /* High DPI display improvements */
 @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
   .sidebar-logo {
-    image-rendering: -webkit-optimize-contrast;
-    image-rendering: crisp-edges;
+    /* Support for Edge Legacy and modern browsers */
+    image-rendering: -webkit-optimize-contrast; /* Edge 79+ */
+    image-rendering: pixelated; /* Fallback */
+  }
+
+  /* Progressive enhancement for browsers that support crisp-edges */
+  @supports (image-rendering: crisp-edges) {
+    .sidebar-logo {
+      image-rendering: crisp-edges;
+    }
   }
 }
 

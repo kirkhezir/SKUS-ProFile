@@ -1,0 +1,37 @@
+/* CSS Custom Properties for better browser compatibility */
+
+:root {
+  /* Safe area insets for notched devices */
+  --safe-area-inset-top: env(safe-area-inset-top, 0px);
+  --safe-area-inset-right: env(safe-area-inset-right, 0px);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-inset-left: env(safe-area-inset-left, 0px);
+
+  /* Sidebar dimensions */
+  --sidebar-width-expanded: 256px;
+  --sidebar-width-collapsed: 64px;
+  --sidebar-width-mobile: 288px;
+  --sidebar-width-tablet: 288px;
+
+  /* Z-index layers */
+  --z-overlay: 20;
+  --z-sidebar-mobile: 40;
+  --z-sidebar-desktop: 30;
+  --z-tooltips: 50;
+
+  /* Animation durations */
+  --duration-normal: 300ms;
+  --duration-fast: 200ms;
+  --duration-slow: 500ms;
+
+  /* Border radius */
+  --radius-lg: 0.5rem;
+  --radius-md: 0.375rem;
+  --radius-sm: 0.25rem;
+
+  /* Shadows */
+  --shadow-sidebar: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-tooltip: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}

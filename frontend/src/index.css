@@ -1,6 +1,7 @@
+/* Import CSS variables and mobile-specific styles */
+@import "./styles/variables.css";
+@import "./styles/mobile.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* Import mobile-specific styles */
-@import './styles/mobile.css';
